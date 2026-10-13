@@ -24,14 +24,14 @@ Die veröffentlichte Anwendung benötigt die Microsoft Edge WebView2-Laufzeit. B
 
 Der Updater verwendet das öffentliche Repository `Rakoonir/tafel-email-assistent`. Er prüft beim Start nach einer neuen Version; zusätzlich kannst du die Prüfung in den **Einstellungen** auslösen. Vor Download und Neustart fragt die App nach Zustimmung.
 
-Die GitHub-Actions-Pipeline `.github/workflows/release.yml` baut einen Velopack-Installer und Updatepakete, sobald ein Versions-Tag wie `v1.0.0` gepusht wird:
+Die GitHub-Actions-Pipeline `.github/workflows/release.yml` baut einen Velopack-Installer, ein MSI für die Windows-App-Liste und Updatepakete, sobald ein Versions-Tag wie `v1.0.2` gepusht wird:
 
 ```powershell
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
-Die erste Installation muss über `TafelEmailAssistent-win-Setup.exe` aus dem GitHub-Release erfolgen. Eine bisher manuell aus einem `publish`-Ordner gestartete Kopie kann sich nicht selbst aktualisieren und muss einmalig über den Installer ersetzt werden.
+Für die Installation mit einem Eintrag in **Installierte Apps** `TafelEmailAssistent-win.msi` aus dem GitHub-Release verwenden. Es wird pro Benutzer installiert und benötigt keine Administratorrechte. `TafelEmailAssistent-win-Setup.exe` bleibt zusätzlich als Velopack-Ein-Klick-Installer verfügbar. Als Paket-Hersteller wird **Oldenburger Tafel e.V.** angezeigt; für eine vertrauenswürdige Herausgeberwarnung braucht es zusätzlich eine Codesignatur. Eine bisher manuell aus einem `publish`-Ordner gestartete Kopie kann sich nicht selbst aktualisieren und muss einmalig über einen Installer ersetzt werden.
 
 `appsettings.json` ist lokal und wird durch `.gitignore` vom Repository ausgeschlossen. GitHub Actions paketiert `appsettings.example.json` mit leeren Microsoft-365- und Support-Feldern. Die IDs und Support-Kontakte werden je Installation im Einstellungsmenü gepflegt und unter `%LOCALAPPDATA%\TafelEmailAssistent\settings.json` gespeichert. Client-ID und Tenant-ID sind keine Geheimnisse; ein Client-Secret oder GitHub-Token darf nicht in die App eingebettet werden.
 

@@ -91,13 +91,13 @@ Nie `git add -f desktop/appsettings.json` verwenden. Vor jedem Commit prüfen, d
 Der GitHub-Actions-Workflow baut ein Release, wenn ein neuer Versions-Tag gepusht wird. Erst den Quellcode auf `main` pushen, dann eine noch unbenutzte Version taggen:
 
 ```powershell
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
 Die Versionsnummer bei jedem Release erhöhen und einen veröffentlichten Tag nicht wiederverwenden. GitHub Actions erzeugt den x64-Velopack-Installer, Updatepakete und `releases.win.json` und hängt sie an ein GitHub-Release an. Den Lauf unter **Actions** kontrollieren.
 
-Die erste Installation auf einem Computer erfolgt über `TafelEmailAssistent-win-Setup.exe` aus dem Release. Direkt aus einem `publish`-Ordner gestartete Versionen sind nicht Velopack-installiert und können sich nicht automatisch aktualisieren. Nach der Installation prüft die App beim Start auf Updates; zusätzlich kann die Prüfung in den Einstellungen manuell ausgelöst werden.
+Für einen Eintrag in **Installierte Apps** `TafelEmailAssistent-win.msi` aus dem Release verwenden; es wird pro Benutzer ohne Adminrechte installiert. `TafelEmailAssistent-win-Setup.exe` bleibt zusätzlich verfügbar. Als Paket-Hersteller wird **Oldenburger Tafel e.V.** angezeigt; eine vertrauenswürdige Herausgeberwarnung erfordert zusätzlich eine Codesignatur. Direkt aus einem `publish`-Ordner gestartete Versionen sind nicht Velopack-installiert und können sich nicht automatisch aktualisieren. Nach der Installation prüft die App beim Start auf Updates; zusätzlich kann die Prüfung in den Einstellungen manuell ausgelöst werden.
 
 ## Wichtige Dateien
 
