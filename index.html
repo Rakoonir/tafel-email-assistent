@@ -1,0 +1,1431 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Tafel E-Mail-Assistent</title>
+    <link rel="icon" type="image/svg+xml" href="assets/tafel-logo-kreis.svg" />
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              bg: "var(--bg)",
+              card: "var(--card)",
+              tx: "var(--tx)",
+              mu: "var(--mu)",
+              pr: "var(--pr)",
+              on: "var(--on)",
+              ac: "var(--ac)",
+              bd: "var(--bd)",
+              er: "var(--er)",
+              soft: "var(--soft)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        --bg: #f4f7f1;
+        --card: #ffffff;
+        --tx: #1c2a21;
+        --mu: #5b6a60;
+        --pr: #1e7a3c;
+        --on: #ffffff;
+        --ac: #f08a00;
+        --bd: #d8e0d4;
+        --er: #b3261e;
+        --soft: #e7f1e6;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .dark {
+        --bg: #111812;
+        --card: #1a251d;
+        --tx: #e8efe9;
+        --mu: #9aab9f;
+        --pr: #4fbf78;
+        --on: #0b160e;
+        --ac: #ffa733;
+        --bd: #2c3b30;
+        --er: #f2827a;
+        --soft: #223328;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        background: var(--bg);
+        color: var(--tx);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid var(--bd);
+        background: var(--card);
+        color: var(--tx);
+        padding: 0.5rem 0.8rem;
+        border-radius: 0.6rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .btn:hover {
+        border-color: var(--pr);
+      }
+      .btn-p {
+        background: var(--pr);
+        color: var(--on);
+        border-color: var(--pr);
+        font-weight: 600;
+      }
+      .btn-p:hover {
+        filter: brightness(1.08);
+      }
+      .btn-s {
+        padding: 0.35rem 0.5rem;
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .inp {
+        border: 1px solid var(--bd);
+        background: var(--bg);
+        color: var(--tx);
+        border-radius: 0.6rem;
+        padding: 0.55rem 0.7rem;
+        min-width: 0;
+        width: 100%;
+      }
+      .inp:focus {
+        outline: 2px solid var(--pr);
+        outline-offset: 0;
+      }
+      .rt ul {
+        list-style: disc;
+        padding-left: 1.4rem;
+      }
+      .rt ol {
+        list-style: decimal;
+        padding-left: 1.4rem;
+      }
+      .rt a {
+        color: var(--pr);
+        text-decoration: underline;
+      }
+      .rt b,
+      .rt strong {
+        font-weight: 700;
+      }
+      .rt i,
+      .rt em {
+        font-style: italic;
+      }
+      .rt u {
+        text-decoration: underline;
+      }
+      .rt {
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <header class="bg-pr text-on">
+      <div
+        class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3"
+      >
+        <div class="flex items-center gap-3">
+          <img src="assets/tafel-logo-kreis.svg" alt="" class="w-7 h-7" />
+          <div>
+            <h1 class="text-lg font-bold leading-tight">
+              Tafel E-Mail-Assistent
+            </h1>
+            <p class="text-sm opacity-90">
+              Vorlagen schnell &amp; persönlich versenden
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="inline-flex items-center gap-2 rounded-lg px-2 py-2 border border-current/40 hover:bg-white/10"
+            onclick="openSettings()"
+            aria-label="Einstellungen öffnen"
+          >
+            <i data-lucide="settings" class="w-5 h-5"></i>
+            <span class="hidden sm:inline">Einstellungen</span>
+          </button>
+          <button
+            class="inline-flex items-center gap-2 rounded-lg px-2 py-2 border border-current/40 hover:bg-white/10"
+            onclick="openSupport()"
+            aria-label="Support-Kontakt öffnen"
+          >
+            <i data-lucide="circle-help" class="w-5 h-5"></i>
+            <span class="hidden sm:inline">Support</span>
+          </button>
+          <button
+            id="th"
+            class="rounded-lg p-2 border border-current/40 hover:bg-white/10"
+            aria-label="Design wechseln"
+            onclick="toggleTheme()"
+          >
+            <i data-lucide="moon" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+      <div class="h-1.5 bg-ac"></div>
+    </header>
+    <main class="max-w-3xl mx-auto px-4 py-5 pb-16">
+      <div id="steps" class="grid grid-cols-3 gap-2 mb-5"></div>
+      <div id="view"></div>
+    </main>
+
+    <!-- Modal Personen -->
+    <div
+      id="ov"
+      class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50"
+    >
+      <div
+        class="bg-card border border-bd rounded-2xl p-5 w-full max-w-2xl max-h-[90%] overflow-auto"
+      >
+        <h2 id="mTitle" class="text-lg font-bold mb-3 flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-5 h-5 text-pr"></i>Personen
+          hinzufügen
+        </h2>
+        <div id="rows"></div>
+        <p id="merr" class="text-er text-sm my-2"></p>
+        <button
+          id="addBtn"
+          class="btn"
+          onclick="addRow()"
+          aria-label="Weitere Person"
+        >
+          <i data-lucide="plus" class="w-4 h-4"></i>Weitere Person
+        </button>
+        <div class="flex justify-between mt-5">
+          <button class="btn" onclick="closeM()">
+            <i data-lucide="x" class="w-4 h-4"></i>Abbrechen</button
+          ><button class="btn btn-p" onclick="saveM()">
+            <i data-lucide="check" class="w-4 h-4"></i>Übernehmen
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Vorlage -->
+    <div
+      id="ov2"
+      class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50"
+    >
+      <div
+        class="bg-card border border-bd rounded-2xl p-5 w-full max-w-3xl max-h-[92%] overflow-auto"
+      >
+        <h2 id="edTitle" class="text-lg font-bold mb-3 flex items-center gap-2">
+          <i data-lucide="file-pen-line" class="w-5 h-5 text-pr"></i>Vorlage
+        </h2>
+        <label class="text-sm text-mu">Name der Vorlage</label>
+        <input
+          id="edN"
+          class="inp mb-2"
+          placeholder="z. B. Einladung Infoabend"
+        />
+        <label class="text-sm text-mu">Für wen?</label
+        ><select id="edK" class="inp mb-2">
+          <option value="nutzer">Nutzer</option>
+          <option value="ehrenamt">Ehrenamtliche</option>
+        </select>
+        <label class="text-sm text-mu">Betreff</label>
+        <input id="edS" class="inp mb-3" placeholder="Betreff der E-Mail" />
+        <div
+          class="flex flex-wrap items-center gap-1 mb-2"
+          onmousedown="event.preventDefault()"
+        >
+          <button
+            class="btn btn-s"
+            onclick="fmt('bold')"
+            title="Fett"
+            aria-label="Fett"
+          >
+            <i data-lucide="bold" class="w-4 h-4"></i>
+          </button>
+          <button
+            class="btn btn-s"
+            onclick="fmt('italic')"
+            title="Kursiv"
+            aria-label="Kursiv"
+          >
+            <i data-lucide="italic" class="w-4 h-4"></i>
+          </button>
+          <button
+            class="btn btn-s"
+            onclick="fmt('underline')"
+            title="Unterstrichen"
+            aria-label="Unterstrichen"
+          >
+            <i data-lucide="underline" class="w-4 h-4"></i>
+          </button>
+          <button
+            class="btn btn-s"
+            onclick="fmt('insertUnorderedList')"
+            title="Aufzählung"
+            aria-label="Aufzählung"
+          >
+            <i data-lucide="list" class="w-4 h-4"></i>
+          </button>
+          <button
+            class="btn btn-s"
+            onclick="fmt('insertOrderedList')"
+            title="Nummerierung"
+            aria-label="Nummerierung"
+          >
+            <i data-lucide="list-ordered" class="w-4 h-4"></i>
+          </button>
+          <button
+            class="btn btn-s"
+            onclick="toggleLink()"
+            title="Link einfügen"
+            aria-label="Link"
+          >
+            <i data-lucide="link" class="w-4 h-4"></i>
+          </button>
+          <button
+            class="btn btn-s"
+            onclick="
+              fmt('removeFormat');
+              fmt('unlink');
+            "
+            title="Formatierung entfernen"
+            aria-label="Formatierung entfernen"
+          >
+            <i data-lucide="eraser" class="w-4 h-4"></i>
+          </button>
+          <span class="mx-1 text-mu text-sm">Platzhalter:</span>
+          <button class="btn btn-s text-sm" onclick="ph('{{Anrede}}')">
+            Anrede
+          </button>
+          <button class="btn btn-s text-sm" onclick="ph('{{Nachname}}')">
+            Nachname
+          </button>
+          <button class="btn btn-s text-sm" onclick="ph('{{Datum}}')">
+            Datum
+          </button>
+          <button class="btn btn-s text-sm" onclick="ph('{{Uhrzeit}}')">
+            Uhrzeit
+          </button>
+          <button class="btn btn-s text-sm" onclick="ph('{{UhrzeitBis}}')">
+            Uhrzeit bis
+          </button>
+          <button
+            class="btn btn-s text-sm"
+            onclick="ph('{{Registrierungsdatum}}')"
+          >
+            Registriert am
+          </button>
+          <button class="btn btn-s text-sm" onclick="ph('{{Platz}}')">
+            Platz
+          </button>
+        </div>
+        <div id="lk" class="hidden flex gap-2 mb-2">
+          <input
+            id="lku"
+            class="inp"
+            placeholder="https://www.beispiel.de"
+          /><button class="btn btn-p" onclick="applyLink()">
+            <i data-lucide="check" class="w-4 h-4"></i>Setzen
+          </button>
+        </div>
+        <div
+          id="ed"
+          class="inp rt min-h-[240px] bg-bg"
+          contenteditable="true"
+          spellcheck="true"
+        ></div>
+        <p class="text-xs text-mu mt-2">
+          Text markieren und Format wählen. Für einen Link zuerst Text
+          markieren, dann <i>Link</i> klicken. Platzhalter werden beim Senden
+          ersetzt: Anrede („Sehr geehrter Herr Müller“), Datum („Dienstag,
+          20.10.2026“) und Uhrzeit („14:30 Uhr“).
+        </p>
+        <p id="edErr" class="text-er text-sm mt-1"></p>
+        <div class="flex justify-between mt-4">
+          <button class="btn" onclick="closeEd()">
+            <i data-lucide="x" class="w-4 h-4"></i>Abbrechen</button
+          ><button class="btn btn-p" onclick="saveEd()">
+            <i data-lucide="save" class="w-4 h-4"></i>Vorlage speichern
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="signatureOv"
+      class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50"
+    >
+      <div class="bg-card border border-bd rounded-2xl p-5 w-full max-w-2xl max-h-[90%] overflow-auto">
+        <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+          <i data-lucide="signature" class="w-5 h-5 text-pr"></i>Signaturen verwalten
+        </h2>
+        <div id="signatureRows"></div>
+        <p id="signatureError" class="text-er text-sm my-2"></p>
+        <button class="btn" onclick="addSignatureRow()">
+          <i data-lucide="plus" class="w-4 h-4"></i>Signatur hinzufügen
+        </button>
+        <div class="flex justify-between mt-5">
+          <button class="btn" onclick="closeSignatures()"><i data-lucide="x" class="w-4 h-4"></i>Abbrechen</button>
+          <button class="btn btn-p" onclick="saveSignatures()"><i data-lucide="save" class="w-4 h-4"></i>Speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="supportOv"
+      class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50"
+    >
+      <div class="bg-card border border-bd rounded-2xl p-5 w-full max-w-md">
+        <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+          <i data-lucide="life-buoy" class="w-5 h-5 text-pr"></i>Support
+        </h2>
+        <div id="supportContent" class="space-y-3"></div>
+        <div class="flex justify-end mt-5">
+          <button class="btn" onclick="closeSupport()"><i data-lucide="x" class="w-4 h-4"></i>Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="settingsOv"
+      class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50"
+    >
+      <div class="bg-card border border-bd rounded-2xl p-5 w-full max-w-2xl max-h-[92%] overflow-auto">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <i data-lucide="settings" class="w-5 h-5 text-pr"></i>Einstellungen
+        </h2>
+        <section class="border-b border-bd pb-4 mb-4">
+          <h3 class="font-semibold mb-2">Datenspeicher</h3>
+          <label class="text-sm text-mu">Speicherordner</label>
+          <div class="flex gap-2 mt-1">
+            <input id="settingsDataDirectory" class="inp" readonly />
+            <button class="btn shrink-0" onclick="chooseDataFolder()" title="Speicherordner auswählen" aria-label="Speicherordner auswählen">
+              <i data-lucide="folder-open" class="w-4 h-4"></i>Ändern
+            </button>
+          </div>
+          <p class="text-xs text-mu mt-1">Die Datei tafel-daten.json wird dort automatisch gesichert.</p>
+        </section>
+        <section class="border-b border-bd pb-4 mb-4">
+          <h3 class="font-semibold mb-2">Termine</h3>
+          <label class="text-sm text-mu">Standard-Uhrzeit für neue Personen
+            <select id="settingsDefaultTime" class="inp mt-1"></select>
+          </label>
+        </section>
+        <section class="border-b border-bd pb-4 mb-4">
+          <h3 class="font-semibold mb-2">Microsoft 365</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="text-sm text-mu">Client-ID<input id="settingsClientId" class="inp mt-1" spellcheck="false" autocomplete="off" /></label>
+            <label class="text-sm text-mu">Tenant-ID<input id="settingsTenantId" class="inp mt-1" spellcheck="false" autocomplete="off" /></label>
+          </div>
+          <p class="text-xs text-mu mt-1">Wird lokal unter %LOCALAPPDATA%\TafelEmailAssistent\settings.json gespeichert.</p>
+        </section>
+        <section>
+          <h3 class="font-semibold mb-2">Support-Kontakt</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="text-sm text-mu">Name<input id="settingsSupportName" class="inp mt-1" /></label>
+            <label class="text-sm text-mu">E-Mail<input id="settingsSupportEmail" class="inp mt-1" type="email" /></label>
+            <label class="text-sm text-mu">Internetseite<input id="settingsSupportWebsite" class="inp mt-1" type="url" /></label>
+            <label class="text-sm text-mu">Telefon<input id="settingsSupportPhone" class="inp mt-1" type="tel" /></label>
+            <label class="text-sm text-mu sm:col-span-2">Erreichbarkeit<input id="settingsSupportHours" class="inp mt-1" /></label>
+          </div>
+        </section>
+        <section class="border-t border-bd pt-4 mt-4">
+          <h3 class="font-semibold mb-2">Updates</h3>
+          <div class="flex flex-wrap items-center gap-3">
+            <button class="btn" onclick="checkForUpdates()">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>Jetzt nach Updates suchen
+            </button>
+            <span id="updateStatus" class="text-sm text-mu" aria-live="polite">Beim Start wird automatisch geprüft.</span>
+          </div>
+        </section>
+        <p id="settingsError" class="text-er text-sm mt-3"></p>
+        <div class="flex justify-between mt-5">
+          <button class="btn" onclick="closeSettings()"><i data-lucide="x" class="w-4 h-4"></i>Schließen</button>
+          <button class="btn btn-p" onclick="saveSettings()"><i data-lucide="save" class="w-4 h-4"></i>Einstellungen speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const h2 = (s) => s.replace(/\n/g, "<br>");
+      const OLD = [
+        {
+          id: "t1",
+          n: "Begrüßung neuer Nutzer",
+          s: "Willkommen bei der Tafel",
+          h: h2(
+            "{{Anrede}} {{Nachname}},\n\nvielen Dank für Ihre Anmeldung bei der Tafel. Wir freuen uns, Sie als neuen Nutzer begrüßen zu dürfen.\n\n<b>Bitte bringen Sie zu Ihrem ersten Termin Ihren Ausweis und Ihre Nachweise mit.</b>\n\nMit freundlichen Grüßen\nIhr Tafel-Team",
+          ),
+        },
+        {
+          id: "t2",
+          n: "Eingangsbestätigung Ehrenamt",
+          s: "Ihre Bewerbung als ehrenamtliche Helferin / ehrenamtlicher Helfer",
+          h: h2(
+            "{{Anrede}} {{Nachname}},\n\nvielen Dank für Ihr Interesse an einem Ehrenamt bei der Tafel. Wir haben Ihre Bewerbung erhalten und melden uns in Kürze bei Ihnen.\n\nMit freundlichen Grüßen\nIhr Tafel-Team",
+          ),
+        },
+        {
+          id: "t3",
+          n: "Einladung Kennenlerngespräch",
+          s: "Einladung zum Kennenlerngespräch",
+          h: h2(
+            "{{Anrede}} {{Nachname}},\n\ngerne würden wir Sie zu einem unverbindlichen Kennenlerngespräch einladen.\n\nTermin: <b>{{Datum}}</b> um <b>{{Uhrzeit}}</b>\n\nBitte bestätigen Sie uns kurz, ob der Termin für Sie passt.\n\nMit freundlichen Grüßen\nIhr Tafel-Team",
+          ),
+        },
+      ];
+      const DEF = [
+        {
+          id: "n1",
+          kat: "nutzer",
+          n: "Warteliste – aktueller Platz",
+          s: "Ihr Platz auf der Warteliste der Oldenburger Tafel e.V.",
+          h: h2(
+            `{{Anrede}} {{Nachname}},\n\nSie haben sich am {{Registrierungsdatum}} auf der Warteliste der Oldenburger Tafel e.V. eingetragen.\nAufgrund dass wir derzeit über 500 Personen auf der Warteliste haben, kann die Wartezeit für die Aufnahme 12-18 Monate dauern.\nSie befinden sich derzeit auf Platz {{Platz}} - daher bitte ich Sie noch um etwas Geduld.\nSobald wir einen Platz für Sie frei haben, werden wir uns bei Ihnen melden.`,
+          ),
+        },
+        {
+          id: "n2",
+          kat: "nutzer",
+          n: "Einladung – Tafelkarte",
+          s: "Einladung zur Ausstellung Ihrer Tafelkarte",
+          h: h2(
+            `{{Anrede}} {{Nachname}},\n\nwir haben einen Platz für Sie frei.\nBitte kommen Sie am {{Datum}} in der Zeit zwischen {{Uhrzeit}} und {{UhrzeitBis}} hier in die <a href="https://www.google.com/maps/search/Kaiserstr.+14">Kaiserstr. 14</a>, damit ich Ihnen eine Tafelkarte ausstellen kann.\nBringen Sie bitte Ihre (sämtlichen) Ausweise/Dokumente sowie den/die Oldenburg-Pass/Pässe mit.`,
+          ),
+        },
+        {
+          id: "n3",
+          kat: "ehrenamt",
+          n: "Absage – aktuell keine freie Stelle",
+          s: "Ihr Interesse an einer ehrenamtlichen Tätigkeit bei der Oldenburger Tafel e.V.",
+          h: h2(
+            `{{Anrede}} {{Nachname}},\n\nVielen Dank für Ihr Interesse an einer ehrenamtlichen Tätigkeit bei der Oldenburger Tafel e.V.\nViele Oldenburger haben die gleiche Einstellung wie Sie und unterstützen uns tatkräftig, ansonsten wäre der „Betrieb“ der Tafel auch nicht zu gewährleisten.\nZurzeit ist es so, dass alle unsere Teams so gut besetzt sind (über 180 Ehrenamtliche), dass ich aktuell leider keine Stelle frei habe, die ich anbieten könnte.\nAus Erfahrung weiß ich aber, dass sich die personelle Situation schnell ändern kann.\nIch wäre dann so frei mich bei Ihnen zu melden.\nBis dahin verbleibe ich,`,
+          ),
+        },
+        {
+          id: "n4",
+          kat: "ehrenamt",
+          n: "Registrierung über die Homepage",
+          s: "Ehrenamt bei der Oldenburger Tafel e.V.",
+          h: h2(
+            `{{Anrede}} {{Nachname}},\n\nvielen Dank für Ihr Interesse uns ehrenamtlich zu unterstützen.\nIn der Tat hat die Oldenburger Tafel e. V. das „Luxusproblem“, dass sich mehr Menschen hier ehrenamtlich engagieren möchten als das wir „freie Stellen“ haben.\nIch bitte Sie sich über unserer Homepage unter folgendem Link zu registrieren:\n<a href="https://oldenburger-tafel.de/ehrenamt/">Ehrenamt - Oldenburger Tafel e.V</a>\nDort können Sie die Bereiche und Tage angeben, die Sie interessieren und an der Sie potentiell Zeit hätten.\nWir werden uns dann sehr gerne mit Ihnen in Verbindung setzen, sobald wir wieder passende Plätze für eine ehrenamtliche Mitarbeit frei haben.`,
+          ),
+        },
+      ];
+      let T = DEF.map((x) => ({ ...x })),
+        P = [],
+        step = 1,
+        sel = T[0].id,
+        katSel = "nutzer",
+        sent = {},
+        delId = null,
+        editId = null,
+        savedRange = null,
+        signatures = [],
+        selectedSignature = null,
+        supportInfo = {},
+        appPreferences = { dataDirectory: "", defaultTime: "08:00" },
+        expandedRecipients = {};
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      try {
+          const appData = window.__TAFEL_APP_DATA__;
+          if (appData) {
+            if (Array.isArray(appData.templates)) {
+              localStorage.setItem("tafelT2", JSON.stringify(appData.templates));
+              localStorage.setItem("tafelV", "4");
+            }
+            if (Array.isArray(appData.people))
+              localStorage.setItem("tafelP", JSON.stringify(appData.people));
+            if (Array.isArray(appData.signatures))
+              localStorage.setItem("tafelSignatures", JSON.stringify(appData.signatures));
+            if (typeof appData.selectedSignature === "string")
+              localStorage.setItem("tafelSelectedSignature", appData.selectedSignature);
+            if (appData.theme === "light" || appData.theme === "dark")
+              localStorage.setItem("tafelTheme", appData.theme);
+          }
+        const t = JSON.parse(localStorage.getItem("tafelT2") || "null");
+        if (t) {
+          const keep = t.filter(
+            (x) =>
+              !OLD.some((o) => o.id === x.id && o.n === x.n && o.s === x.s),
+          );
+          if (localStorage.getItem("tafelV") !== "4") {
+            const have = new Set(keep.map((x) => x.id));
+            DEF.forEach((d) => {
+              if (!have.has(d.id)) keep.push({ ...d });
+            });
+          }
+          T = keep;
+        } else {
+          const o = JSON.parse(localStorage.getItem("tafelT") || "null");
+          if (o && o.length)
+            T = o.map((x, i) => ({
+              id: "m" + i,
+              n: x.n,
+              s: x.s,
+              h: h2(esc(x.b)),
+            }));
+        }
+        const p = JSON.parse(localStorage.getItem("tafelP") || "null");
+        if (p) P = p;
+        const sigs = JSON.parse(localStorage.getItem("tafelSignatures") || "null");
+        if (Array.isArray(sigs)) signatures = sigs;
+        selectedSignature = localStorage.getItem("tafelSelectedSignature") || null;
+      } catch (e) {}
+      if (!signatures.some((x) => x.id === selectedSignature))
+        selectedSignature = signatures[0]?.id || null;
+      T.forEach((x) => {
+        if (!x.kat) x.kat = "nutzer";
+      });
+      if (!T.find((x) => x.id === sel)) sel = T[0] ? T[0].id : null;
+      {
+        const f = T.find((x) => x.id === sel);
+        katSel = f ? f.kat : "nutzer";
+      }
+      const sv = () => {
+        try {
+          localStorage.setItem("tafelT2", JSON.stringify(T));
+          localStorage.setItem("tafelP", JSON.stringify(P));
+          localStorage.setItem("tafelV", "4");
+        } catch (e) {}
+        postPersistentData();
+      };
+      const saveSignatureSelection = () => {
+        try {
+          localStorage.setItem("tafelSignatures", JSON.stringify(signatures));
+          localStorage.setItem("tafelSelectedSignature", selectedSignature || "");
+        } catch (e) {}
+        postPersistentData();
+      };
+      const postPersistentData = () => {
+        if (!window.chrome?.webview) return;
+        window.chrome.webview.postMessage({
+          type: "saveData",
+          data: {
+            templates: T,
+            people: P,
+            signatures,
+            selectedSignature: selectedSignature || "",
+            theme,
+          },
+        });
+      };
+      const $ = (id) => document.getElementById(id);
+      const ic = (n, c = "") =>
+        `<i data-lucide="${n}" class="w-4 h-4 ${c}"></i>`;
+      const icons = () => lucide.createIcons();
+      const gruss = (p) =>
+        p.anrede === "Herr" ? "Sehr geehrter Herr" : "Sehr geehrte Frau";
+      const fmtD = (d) => {
+        if (!d) return "";
+        const [y, m, t] = d.split("-").map(Number);
+        return new Date(y, m - 1, t).toLocaleDateString("de-DE", {
+          weekday: "long",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      };
+      const fmtZ = (z) => (z ? z + " Uhr" : "");
+      const fmtDK = (d) => {
+        if (!d) return "";
+        const [y, m, t] = d.split("-");
+        return t + "." + m + "." + y;
+      };
+      const vals = (p) => ({
+        Anrede: gruss(p),
+        Nachname: p.name,
+        Datum: fmtD(p.datum),
+        Uhrzeit: fmtZ(p.zeit),
+        UhrzeitBis: fmtZ(p.zeitBis),
+        Registrierungsdatum: fmtDK(p.reg),
+        Platz: p.platz || "",
+      });
+      const fill = (h, p) => {
+        const v = vals(p);
+        return h.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in v ? esc(v[k]) : m));
+      };
+      const info = (p) => {
+        const a = [];
+        if (p.reg) a.push("Registriert: " + fmtDK(p.reg));
+        if (p.platz) a.push("Platz " + p.platz);
+        const t = [
+          p.datum ? fmtD(p.datum) : "",
+          p.zeit
+            ? p.zeitBis
+              ? fmtZ(p.zeit) + " – " + fmtZ(p.zeitBis)
+              : fmtZ(p.zeit)
+            : "",
+        ]
+          .filter(Boolean)
+          .join(", ");
+        if (t) a.push("Einladung: " + t);
+        return a.join(" · ");
+      };
+      const fillS = (s, p) => {
+        const v = vals(p);
+        return s.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in v ? v[k] : m));
+      };
+      const NEED = {
+        Datum: ["datum", "Einladungsdatum"],
+        Uhrzeit: ["zeit", "Uhrzeit (von)"],
+        UhrzeitBis: ["zeitBis", "Uhrzeit (bis)"],
+        Registrierungsdatum: ["reg", "Registrierungsdatum"],
+        Platz: ["platz", "Platz"],
+      };
+      const miss = (t, p) => {
+        const x = t.h + " " + t.s,
+          a = [];
+        for (const k in NEED)
+          if (x.includes("{{" + k + "}}") && !p[NEED[k][0]]) a.push(NEED[k][1]);
+        return a;
+      };
+      const mailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const card = "bg-card border border-bd rounded-2xl p-4 mb-4 shadow-sm";
+      const curT = () => T.find((x) => x.id === sel);
+      const TL = () => T.filter((x) => x.kat === katSel);
+
+      /* Bereinigung: nur harmlose Formatierung erlauben */
+      const OK = new Set([
+        "B",
+        "STRONG",
+        "I",
+        "EM",
+        "U",
+        "A",
+        "SPAN",
+        "FONT",
+        "IMG",
+        "TABLE",
+        "TBODY",
+        "THEAD",
+        "TFOOT",
+        "TR",
+        "TD",
+        "TH",
+        "UL",
+        "OL",
+        "LI",
+        "BR",
+        "P",
+        "DIV",
+      ]);
+      const SAFE_STYLE = new Set([
+        "background-color",
+        "border",
+        "border-collapse",
+        "color",
+        "font-family",
+        "font-size",
+        "font-style",
+        "font-weight",
+        "height",
+        "line-height",
+        "margin",
+        "padding",
+        "text-align",
+        "text-decoration",
+        "vertical-align",
+        "width",
+      ]);
+      const cleanStyle = (value) =>
+        value
+          .split(";")
+          .map((rule) => rule.split(/:(.+)/, 2))
+          .filter(
+            ([property, content]) =>
+              property &&
+              content &&
+              SAFE_STYLE.has(property.trim().toLowerCase()) &&
+              !/(url\s*\(|expression\s*\(|javascript:|@import|behavior\s*:)/i.test(content),
+          )
+          .map(([property, content]) => `${property.trim().toLowerCase()}:${content.trim()}`)
+          .join(";");
+      function clean(n) {
+        [...n.childNodes].forEach((c) => {
+          if (c.nodeType === 3) return;
+          if (c.nodeType !== 1 || ["SCRIPT", "STYLE"].includes(c.tagName)) {
+            c.remove();
+            return;
+          }
+          clean(c);
+          if (!OK.has(c.tagName)) {
+            c.replaceWith(...c.childNodes);
+            return;
+          }
+          [...c.attributes].forEach((a) => {
+            const name = a.name.toLowerCase();
+            const safeLink = c.tagName === "A" && name === "href" && /^(https?:|mailto:|tel:)/i.test(a.value);
+            const safeImage = c.tagName === "IMG" && name === "src" && (/^https:/i.test(a.value) || /^data:image\/(png|gif|jpeg|webp);base64,/i.test(a.value));
+            const safeStyle = name === "style" && cleanStyle(a.value);
+            const safeDimension = ["IMG", "TABLE", "TD", "TH"].includes(c.tagName) && ["width", "height", "colspan", "rowspan"].includes(name) && /^\d{1,4}$/.test(a.value);
+            const safeImageAlt = c.tagName === "IMG" && name === "alt";
+            if (safeStyle) c.setAttribute("style", safeStyle);
+            else if (!(safeLink || safeImage || safeStyle || safeDimension || safeImageAlt)) c.removeAttribute(a.name);
+          });
+        });
+      }
+      function sanitize(h) {
+        const d = new DOMParser().parseFromString(
+          "<body>" + h,
+          "text/html",
+        ).body;
+        clean(d);
+        return d.innerHTML;
+      }
+      function toText(h) {
+        const d = document.createElement("div");
+        d.innerHTML = h
+          .replace(/<br\s*\/?>/gi, "\n")
+          .replace(/<\/(p|div|li)>/gi, "\n")
+          .replace(/<li>/gi, "• ");
+        d.querySelectorAll("a").forEach((a) => {
+          const u = a.getAttribute("href") || "";
+          if (
+            u &&
+            a.textContent.trim() !== u &&
+            a.textContent.trim() !== u.replace(/^mailto:/, "")
+          )
+            a.textContent = a.textContent + " (" + u + ")";
+        });
+        return d.textContent.replace(/\n{3,}/g, "\n\n").trim();
+      }
+
+      /* Theme */
+      let theme = "light";
+      try {
+        theme =
+          localStorage.getItem("tafelTheme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light");
+      } catch (e) {}
+      function applyTheme() {
+        document.documentElement.classList.toggle("dark", theme === "dark");
+        const b = $("th");
+        if (b) {
+          b.innerHTML = `<i data-lucide="${theme === "dark" ? "sun" : "moon"}" class="w-5 h-5"></i>`;
+          icons();
+        }
+      }
+      function toggleTheme() {
+        theme = theme === "dark" ? "light" : "dark";
+        try {
+          localStorage.setItem("tafelTheme", theme);
+        } catch (e) {}
+        applyTheme();
+        postPersistentData();
+      }
+
+      function render() {
+        const L = [
+          ["users", "Personen"],
+          ["file-text", "Vorlage"],
+          ["send", "Prüfen & Senden"],
+        ];
+        $("steps").innerHTML = L.map(
+          (s, i) =>
+            `<div class="flex items-center justify-center gap-2 rounded-xl border px-2 py-2 text-sm ${step === i + 1 ? "border-pr bg-soft font-semibold" : "border-bd bg-card text-mu"}">${ic(i + 1 < step ? "check" : s[0], step === i + 1 ? "text-pr" : "")}<span class="hidden sm:inline">${s[1]}</span><span class="sm:hidden">${i + 1}</span></div>`,
+        ).join("");
+        const v = $("view");
+        if (step === 1) {
+          v.innerHTML = `<div class="${card}"><div class="flex flex-wrap items-center justify-between gap-2 mb-2"><h2 class="font-bold text-lg">Empfänger (${P.length})</h2><div class="flex flex-wrap gap-2"><button class="btn" onclick="delAllP()" ${P.length ? "" : "disabled"}>${ic("trash-2")}Alle Löschen</button><button class="btn btn-p" onclick="openM()">${ic("user-plus")}Personen hinzufügen</button></div></div>
+  ${P.length ? P.map((p, i) => `<div class="flex items-center justify-between gap-2 py-3 border-b border-bd last:border-0"><div class="min-w-0"><div class="font-semibold">${esc(p.anrede)} ${esc(p.name)}</div><div class="text-sm text-mu truncate">${esc(p.mail)}</div>${info(p) ? `<div class="text-sm text-mu">${ic("calendar-clock", "inline mr-1")}${esc(info(p))}</div>` : ""}</div><div class="flex gap-2 shrink-0"><button class="btn" onclick="openM(${i})" aria-label="Bearbeiten" title="Bearbeiten">${ic("pencil")}</button><button class="btn" onclick="delP(${i})" aria-label="Entfernen" title="Entfernen">${ic("trash-2")}</button></div></div>`).join("") : `<p class="text-mu py-6 text-center">Noch keine Personen erfasst.</p>`}</div>
+  <div class="flex justify-end"><button class="btn btn-p" ${P.length ? "" : "disabled"} onclick="go(2)">Weiter${ic("arrow-right")}</button></div>`;
+        } else if (step === 2) {
+          const t = curT(),
+            demo = {
+              anrede: "Frau",
+              name: "Mustermann",
+              datum: "2026-10-20",
+              zeit: "09:00",
+              zeitBis: "10:00",
+              reg: "2026-03-12",
+              platz: "142",
+            };
+          v.innerHTML = `<div class="${card}"><div class="flex flex-wrap items-center justify-between gap-2 mb-3"><h2 class="font-bold text-lg">Vorlage wählen</h2><button class="btn btn-p" onclick="openEd(null)">${ic("plus")}Neue Vorlage</button></div>
+  <div class="grid grid-cols-2 gap-2 mb-3">${[
+    ["nutzer", "users", "Nutzer informieren"],
+    ["ehrenamt", "heart-handshake", "Ehrenamtliche informieren"],
+  ]
+    .map(
+      (k) =>
+        `<button class="btn justify-center ${katSel === k[0] ? "!bg-pr !text-on !border-pr font-semibold" : ""}" onclick="setKat('${k[0]}')">${ic(k[1])}${k[2]}</button>`,
+    )
+    .join("")}</div>${
+    TL().length
+      ? TL()
+          .map(
+            (
+              x,
+            ) => `<div class="flex items-center gap-2 p-3 rounded-xl border mb-2 ${sel === x.id ? "border-pr bg-soft ring-1 ring-pr" : "border-bd"}">
+   <label class="flex-1 min-w-0 cursor-pointer flex items-start gap-2"><input type="radio" name="t" class="accent-[var(--pr)] mt-1.5" ${sel === x.id ? "checked" : ""} onchange="sel='${x.id}';delId=null;render()"><span class="min-w-0"><b class="block">${esc(x.n)}</b><span class="block text-sm text-mu truncate">Betreff: ${esc(x.s)}</span></span></label>
+   <button class="btn btn-s" onclick="openEd('${x.id}')" title="Bearbeiten" aria-label="Bearbeiten">${ic("pencil")}</button>
+   <button class="btn btn-s" onclick="dupT('${x.id}')" title="Duplizieren" aria-label="Duplizieren">${ic("copy")}</button>
+   <button class="btn btn-s ${delId === x.id ? "!border-er !text-er" : ""}" onclick="delT('${x.id}')" title="Löschen" aria-label="Löschen">${ic("trash-2")}${delId === x.id ? "Sicher?" : ""}</button></div>`,
+          )
+          .join("")
+      : `<p class="text-mu py-4 text-center">Keine Vorlagen vorhanden. Lege eine neue Vorlage an.</p>`
+  }</div>
+  ${t ? `<div class="${card}"><h2 class="font-bold mb-1">Vorschau</h2><div class="text-sm text-mu mb-2">Betreff: ${esc(fillS(t.s, demo))}</div><div class="rt p-3 rounded-lg bg-bg border border-bd">${fill(t.h, demo)}</div></div>` : ""}
+  <div class="flex justify-between"><button class="btn" onclick="go(1)">${ic("arrow-left")}Zurück</button><button class="btn btn-p" ${t ? "" : "disabled"} onclick="go(3)">Weiter${ic("arrow-right")}</button></div>`;
+        } else {
+          const t = curT();
+          v.innerHTML = `<div class="${card}"><h2 class="font-bold text-lg">Prüfen: ${esc(t.n)}</h2><p class="text-sm text-mu">${P.length} E-Mail(s). Jeder Klick erstellt einen formatierten Entwurf in Outlook, den du dort prüfen und selbst absenden kannst.</p></div>
+  <div class="${card}"><div class="flex flex-wrap items-end justify-between gap-3"><label class="text-sm font-semibold flex-1 min-w-[220px]">Absender-Signatur<select class="inp mt-1" onchange="selectSignature(this.value)"><option value="">Keine Signatur</option>${signatures.map((s) => `<option value="${esc(s.id)}" ${s.id === selectedSignature ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label><button class="btn" onclick="openSignatures()">${ic("signature")}Signaturen verwalten</button></div></div>
+  ${P.map(
+    (p, i) => `<div class="${card}"><div class="flex flex-wrap items-start justify-between gap-2"><button class="list-none cursor-pointer flex items-start gap-2 text-left flex-1 min-w-0" type="button" aria-expanded="${!!expandedRecipients[i]}" onclick="toggleRecipient(${i})"><span class="min-w-0 flex-1"><span class="font-semibold block">${esc(p.anrede)} ${esc(p.name)}</span><span class="text-sm text-mu truncate block">${esc(p.mail)}</span></span>${ic(expandedRecipients[i] ? "chevron-up" : "chevron-down", "shrink-0 text-mu")}</button>
+  <div class="flex gap-2 shrink-0"><button class="btn" onclick="openM(${i})" aria-label="Person bearbeiten" title="Person bearbeiten">${ic("pencil")}</button><button class="btn btn-p" onclick="send(${i})" ${sent[i] === "sending" ? "disabled" : ""}>${ic(sent[i] === "sending" ? "loader-circle" : "mail-plus")}${sent[i] === "sending" ? "Entwurf wird erstellt …" : "Entwurf in Outlook erstellen"}</button></div></div>
+  ${expandedRecipients[i] ? `<div class="mt-3 pt-3 border-t border-bd">
+  ${sent[i] ? `<div class="mb-2 text-sm font-semibold ${sent[i] === "ok" ? "text-pr" : sent[i] === "sending" ? "text-mu" : "text-er"} inline-flex items-center gap-1">${ic(sent[i] === "ok" ? "circle-check" : sent[i] === "sending" ? "loader-circle" : "triangle-alert")}${esc(sent[i] === "ok" ? "Entwurf wurde erstellt und in Outlook geöffnet. Bitte dort prüfen und absenden." : sent[i] === "sending" ? "Anmeldung und Entwurfserstellung laufen …" : sent[i])}</div>` : ""}
+  ${miss(t, p).length ? `<div class="mb-2 text-sm font-semibold text-er inline-flex items-center gap-1">${ic("triangle-alert")}Es fehlt: ${miss(t, p).join(", ")}. Bitte über den Stift-Button ergänzen.</div>` : ""}<div class="text-sm text-mu">Betreff: ${esc(fillS(t.s, p))}</div><div id="pv${i}" class="rt mt-2 p-3 rounded-lg bg-bg border border-bd">${withSignature(fill(t.h, p))}</div></div>` : ""}</div>`,
+  ).join("")}
+  <div class="flex justify-between"><button class="btn" onclick="go(2)">${ic("arrow-left")}Zurück</button><button class="btn" id="rb" onclick="resetAll()">${ic("rotate-ccw")}Neu beginnen</button></div>`;
+        }
+        icons();
+      }
+      function go(n) {
+        step = n;
+        render();
+        scrollTo(0, 0);
+      }
+      function toggleRecipient(i) {
+        expandedRecipients[i] = !expandedRecipients[i];
+        render();
+      }
+      function delP(i) {
+        P.splice(i, 1);
+        expandedRecipients = {};
+        sv();
+        render();
+      }
+      function delAllP() {
+        if (!P.length || !confirm("Möchtest du wirklich alle Empfänger löschen?")) return;
+        P = [];
+        sent = {};
+        expandedRecipients = {};
+        sv();
+        render();
+      }
+      let rc = false;
+      function resetAll() {
+        if (!rc) {
+          rc = true;
+          const b = $("rb");
+          b.innerHTML =
+            ic("triangle-alert") + "Wirklich alle Empfänger entfernen?";
+          icons();
+          setTimeout(() => (rc = false), 4000);
+          return;
+        }
+        rc = false;
+        P = [];
+        sent = {};
+        expandedRecipients = {};
+        sv();
+        go(1);
+      }
+      async function send(i) {
+        const p = P[i],
+          t = curT(),
+          h = withSignature(fill(t.h, p)),
+          tx = toText(h);
+        if (window.chrome?.webview) {
+          sent[i] = "sending";
+          render();
+          window.chrome.webview.postMessage({
+            type: "createDraft",
+            index: i,
+            to: p.mail,
+            subject: fillS(t.s, p),
+            html: h,
+          });
+          return;
+        }
+        let ok = false;
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              "text/html": new Blob([h], { type: "text/html" }),
+              "text/plain": new Blob([tx], { type: "text/plain" }),
+            }),
+          ]);
+          ok = true;
+        } catch (e) {
+          try {
+            const el = $("pv" + i),
+              r = document.createRange(),
+              s = getSelection();
+            r.selectNodeContents(el);
+            s.removeAllRanges();
+            s.addRange(r);
+            ok = document.execCommand("copy");
+            s.removeAllRanges();
+          } catch (e2) {}
+        }
+        sent[i] = ok ? "ok" : "fail";
+        render();
+        location.href =
+          "mailto:" +
+          encodeURIComponent(p.mail) +
+          "?subject=" +
+          encodeURIComponent(fillS(t.s, p)) +
+          (ok ? "" : "&body=" + encodeURIComponent(tx));
+      }
+
+      if (window.chrome?.webview) {
+        window.chrome.webview.addEventListener("message", (event) => {
+          const result = event.data;
+          if (result.type === "supportInfo") {
+            supportInfo = result;
+            return;
+          }
+          if (result.type === "settingsInfo") {
+            appPreferences = result;
+            supportInfo = result.support || {};
+            populateSettings();
+            return;
+          }
+          if (result.type === "updateStatus") {
+            $("updateStatus").textContent = result.message;
+            return;
+          }
+          if (result.type === "settingsStatus") {
+            $("settingsError").textContent = result.message;
+            $("settingsError").className = result.success ? "text-pr text-sm mt-3" : "text-er text-sm mt-3";
+            return;
+          }
+          if (result.type === "dataFolderChanged") {
+            appPreferences.dataDirectory = result.dataDirectory;
+            $("settingsDataDirectory").value = result.dataDirectory;
+            if (result.data) loadPersistentData(result.data);
+            else postPersistentData();
+            return;
+          }
+          if (result.type !== "draftResult") return;
+          sent[result.index] = result.success ? "ok" : result.message;
+          render();
+        });
+      }
+
+      const withSignature = (html) => {
+        const signature = signatures.find((x) => x.id === selectedSignature);
+        if (!signature) return html;
+        const signatureHtml = signature.html || (signature.text ? esc(signature.text).replace(/\r?\n/g, "<br>") : "");
+        if (!signatureHtml.trim()) return html;
+        return `${html}<br>${sanitize(signatureHtml)}`;
+      };
+      function selectSignature(id) {
+        selectedSignature = id || null;
+        saveSignatureSelection();
+        render();
+      }
+      function openSignatures() {
+        $("signatureRows").innerHTML = signatures.map((signature) => signatureRow(signature)).join("");
+        $("signatureError").textContent = "";
+        $("signatureOv").classList.replace("hidden", "flex");
+        icons();
+      }
+      function signatureRow(signature = {}) {
+        const id = signature.id || "s" + Date.now() + Math.random().toString(16).slice(2);
+        const signatureHtml = sanitize(signature.html || (signature.text ? esc(signature.text).replace(/\r?\n/g, "<br>") : ""));
+        return `<div class="signature-row border border-bd rounded-xl p-3 mb-3" data-id="${esc(id)}"><label class="text-sm text-mu">Name des Absenderprofils<input class="inp mt-1 mb-2" data-name value="${esc(signature.name || "")}" placeholder="z. B. Max Mustermann"></label><div class="flex items-center justify-between gap-2 mt-2 mb-1"><span class="text-sm text-mu">Formatierte Signatur</span><button class="btn btn-s" type="button" onclick="toggleSignatureSource(this)" title="HTML-Code bearbeiten">${ic("code-xml")}HTML-Code</button></div><div class="inp rt min-h-[120px] bg-bg" contenteditable="true" spellcheck="true" data-signature onpaste="pasteSignature(event)">${signatureHtml}</div><textarea class="inp min-h-[120px] font-mono text-sm hidden" data-signature-source spellcheck="false" aria-label="HTML-Quelltext der Signatur"></textarea><button class="btn btn-s mt-2" onclick="removeSignatureRow(this)" aria-label="Signatur entfernen" title="Signatur entfernen">${ic("trash-2")}Entfernen</button></div>`;
+      }
+      function toggleSignatureSource(button) {
+        const row = button.closest(".signature-row");
+        const editor = row.querySelector("[data-signature]");
+        const source = row.querySelector("[data-signature-source]");
+        if (source.classList.contains("hidden")) {
+          source.value = sanitize(editor.innerHTML);
+          source.classList.remove("hidden");
+          editor.classList.add("hidden");
+          button.innerHTML = `${ic("eye")}Vorschau`;
+          button.title = "Formatierte Signatur anzeigen";
+        } else {
+          editor.innerHTML = sanitize(source.value);
+          source.classList.add("hidden");
+          editor.classList.remove("hidden");
+          button.innerHTML = `${ic("code-xml")}HTML-Code`;
+          button.title = "HTML-Code bearbeiten";
+        }
+        icons();
+      }
+      function pasteSignature(event) {
+        const html = event.clipboardData.getData("text/html");
+        const text = event.clipboardData.getData("text/plain");
+        event.preventDefault();
+        document.execCommand(
+          "insertHTML",
+          false,
+          sanitize(html || esc(text).replace(/\r?\n/g, "<br>")),
+        );
+      }
+      function addSignatureRow() {
+        $("signatureRows").insertAdjacentHTML("beforeend", signatureRow());
+        icons();
+      }
+      function removeSignatureRow(button) {
+        button.closest(".signature-row").remove();
+      }
+      function saveSignatures() {
+        const rows = [...$("signatureRows").querySelectorAll(".signature-row")];
+        const next = [];
+        let invalid = false;
+        rows.forEach((row) => {
+          const name = row.querySelector("[data-name]").value.trim();
+          const editor = row.querySelector("[data-signature]");
+          const source = row.querySelector("[data-signature-source]");
+          const html = sanitize(source.classList.contains("hidden") ? editor.innerHTML : source.value).trim();
+          if (!name && !html) return;
+          if (!name || (!toText(html) && !/<img\b/i.test(html))) {
+            invalid = true;
+            return;
+          }
+          next.push({ id: row.dataset.id, name, html });
+        });
+        if (invalid) {
+          $("signatureError").textContent = "Bitte bei jedem Profil einen Namen und eine gültige HTML-Signatur eintragen.";
+          return;
+        }
+        signatures = next;
+        if (!signatures.some((x) => x.id === selectedSignature))
+          selectedSignature = signatures[0]?.id || null;
+        saveSignatureSelection();
+        $("signatureOv").classList.replace("flex", "hidden");
+        render();
+      }
+      function closeSignatures() {
+        $("signatureOv").classList.replace("flex", "hidden");
+      }
+      function openSupport() {
+        const rows = [];
+        if (supportInfo.name) rows.push(`<p class="font-semibold">${esc(supportInfo.name)}</p>`);
+        if (supportInfo.email) rows.push(`<a class="flex items-center gap-2 text-pr underline" href="mailto:${encodeURIComponent(supportInfo.email)}">${ic("mail")}${esc(supportInfo.email)}</a>`);
+        if (supportInfo.website && /^https?:\/\//i.test(supportInfo.website)) rows.push(`<a class="flex items-center gap-2 text-pr underline break-all" href="${esc(supportInfo.website)}" target="_blank" rel="noopener">${ic("globe")}${esc(supportInfo.website)}</a>`);
+        if (supportInfo.phone) rows.push(`<a class="flex items-center gap-2 text-pr underline" href="tel:${esc(supportInfo.phone.replace(/[^\d+]/g, ""))}">${ic("phone")}${esc(supportInfo.phone)}</a>`);
+        if (supportInfo.hours) rows.push(`<p class="text-sm text-mu">${ic("clock-3", "inline mr-1")}${esc(supportInfo.hours)}</p>`);
+        $("supportContent").innerHTML = rows.length ? rows.join("") : `<p class="text-mu">Die Support-Kontaktdaten sind noch nicht eingerichtet.</p>`;
+        $("supportOv").classList.replace("hidden", "flex");
+        icons();
+      }
+      function closeSupport() {
+        $("supportOv").classList.replace("flex", "hidden");
+      }
+      const quarterHours = () =>
+        Array.from({ length: 96 }, (_, index) => {
+          const hour = String(Math.floor(index / 4)).padStart(2, "0");
+          const minute = String((index % 4) * 15).padStart(2, "0");
+          return `${hour}:${minute}`;
+        });
+      const timeOptions = (selected) =>
+        quarterHours()
+          .map((time) => `<option value="${time}" ${time === selected ? "selected" : ""}>${time}</option>`)
+          .join("");
+      function populateSettings() {
+        $("settingsDataDirectory").value = appPreferences.dataDirectory || "";
+        $("settingsDefaultTime").innerHTML = timeOptions(appPreferences.defaultTime || "08:00");
+        $("settingsClientId").value = appPreferences.authentication?.clientId || "";
+        $("settingsTenantId").value = appPreferences.authentication?.tenantId || "";
+        $("settingsSupportName").value = supportInfo.name || "";
+        $("settingsSupportEmail").value = supportInfo.email || "";
+        $("settingsSupportWebsite").value = supportInfo.website || "";
+        $("settingsSupportPhone").value = supportInfo.phone || "";
+        $("settingsSupportHours").value = supportInfo.hours || "";
+      }
+      function openSettings() {
+        populateSettings();
+        $("settingsError").textContent = "";
+        $("settingsOv").classList.replace("hidden", "flex");
+        icons();
+      }
+      function closeSettings() {
+        $("settingsOv").classList.replace("flex", "hidden");
+      }
+      function chooseDataFolder() {
+        if (!window.chrome?.webview) {
+          $("settingsError").textContent = "Der Speicherordner kann nur in der Desktop-App geändert werden.";
+          return;
+        }
+        window.chrome.webview.postMessage({ type: "chooseDataFolder" });
+      }
+      function saveSettings() {
+        if (!window.chrome?.webview) {
+          $("settingsError").textContent = "Einstellungen können nur in der Desktop-App gespeichert werden.";
+          return;
+        }
+        window.chrome.webview.postMessage({
+          type: "saveSettings",
+          defaultTime: $("settingsDefaultTime").value,
+          authentication: {
+            clientId: $("settingsClientId").value.trim(),
+            tenantId: $("settingsTenantId").value.trim(),
+          },
+          support: {
+            name: $("settingsSupportName").value.trim(),
+            email: $("settingsSupportEmail").value.trim(),
+            website: $("settingsSupportWebsite").value.trim(),
+            phone: $("settingsSupportPhone").value.trim(),
+            hours: $("settingsSupportHours").value.trim(),
+          },
+        });
+        $("settingsError").textContent = "Speichere Einstellungen …";
+      }
+      function checkForUpdates() {
+        if (!window.chrome?.webview) {
+          $("updateStatus").textContent = "Updates sind nur in der installierten Desktop-App verfügbar.";
+          return;
+        }
+        $("updateStatus").textContent = "Suche nach einer neuen Version …";
+        window.chrome.webview.postMessage({ type: "checkForUpdates" });
+      }
+      function loadPersistentData(data) {
+        T = Array.isArray(data.templates) ? data.templates : [];
+        P = Array.isArray(data.people) ? data.people : [];
+        signatures = Array.isArray(data.signatures) ? data.signatures : [];
+        selectedSignature = data.selectedSignature || null;
+        theme = data.theme === "dark" ? "dark" : "light";
+        sel = T[0]?.id || null;
+        katSel = T.find((template) => template.id === sel)?.kat || "nutzer";
+        sent = {};
+        try {
+          localStorage.setItem("tafelT2", JSON.stringify(T));
+          localStorage.setItem("tafelP", JSON.stringify(P));
+          localStorage.setItem("tafelSignatures", JSON.stringify(signatures));
+          localStorage.setItem("tafelSelectedSignature", selectedSignature || "");
+          localStorage.setItem("tafelTheme", theme);
+          localStorage.setItem("tafelV", "4");
+        } catch (e) {}
+        applyTheme();
+        render();
+        postPersistentData();
+      }
+
+      /* Vorlagenverwaltung */
+      function setKat(k) {
+        katSel = k;
+        delId = null;
+        if (!TL().some((x) => x.id === sel)) sel = TL()[0] ? TL()[0].id : null;
+        render();
+      }
+      function dupT(id) {
+        const x = T.find((y) => y.id === id);
+        const n = { ...x, id: "t" + Date.now(), n: x.n + " (Kopie)" };
+        T.splice(T.indexOf(x) + 1, 0, n);
+        sel = n.id;
+        sv();
+        render();
+      }
+      function delT(id) {
+        if (delId !== id) {
+          delId = id;
+          render();
+          setTimeout(() => {
+            if (delId === id) {
+              delId = null;
+              if (step === 2) render();
+            }
+          }, 4000);
+          return;
+        }
+        T = T.filter((x) => x.id !== id);
+        delId = null;
+        if (sel === id) sel = T[0] ? T[0].id : null;
+        sv();
+        render();
+      }
+      function openEd(id) {
+        editId = id;
+        const x = id
+          ? T.find((y) => y.id === id)
+          : {
+              n: "",
+              s: "",
+              h: "{{Anrede}} {{Nachname}},<br><br><br>Mit freundlichen Grüßen<br>Ihr Tafel-Team",
+            };
+        $("edN").value = x.n;
+        $("edS").value = x.s;
+        $("edK").value = x.kat || katSel;
+        $("ed").innerHTML = x.h;
+        $("edErr").textContent = "";
+        $("lk").classList.add("hidden");
+        savedRange = null;
+        $("edTitle").lastChild.textContent = id
+          ? "Vorlage bearbeiten"
+          : "Neue Vorlage";
+        $("ov2").classList.replace("hidden", "flex");
+        icons();
+      }
+      function closeEd() {
+        $("ov2").classList.replace("flex", "hidden");
+      }
+      function saveEd() {
+        const n = $("edN").value.trim(),
+          s = $("edS").value.trim(),
+          kat = $("edK").value,
+          h = sanitize($("ed").innerHTML).trim();
+        if (!n || !s || !toText(h)) {
+          $("edErr").textContent = "Bitte Name, Betreff und Text ausfüllen.";
+          return;
+        }
+        if (editId) {
+          const x = T.find((y) => y.id === editId);
+          Object.assign(x, { n, s, h, kat });
+          sel = x.id;
+        } else {
+          const x = { id: "t" + Date.now(), n, s, h, kat };
+          T.push(x);
+          sel = x.id;
+        }
+        katSel = kat;
+        sv();
+        closeEd();
+        render();
+      }
+      function saveSel() {
+        const s = getSelection();
+        if (s.rangeCount && $("ed").contains(s.anchorNode))
+          savedRange = s.getRangeAt(0).cloneRange();
+      }
+      document.addEventListener("selectionchange", saveSel);
+      function restoreSel() {
+        $("ed").focus();
+        if (savedRange) {
+          const s = getSelection();
+          s.removeAllRanges();
+          s.addRange(savedRange);
+        }
+      }
+      function fmt(c) {
+        restoreSel();
+        document.execCommand(c, false, null);
+      }
+      function ph(t) {
+        restoreSel();
+        document.execCommand("insertText", false, t);
+      }
+      function toggleLink() {
+        saveSel();
+        $("lk").classList.toggle("hidden");
+        $("lku").focus();
+      }
+      function applyLink() {
+        let u = $("lku").value.trim();
+        if (!u) return;
+        if (!/^(https?:|mailto:|tel:)/i.test(u))
+          u =
+            u.includes("@") && !u.includes("/")
+              ? "mailto:" + u
+              : "https://" + u;
+        restoreSel();
+        if (!savedRange || savedRange.collapsed)
+          document.execCommand(
+            "insertHTML",
+            false,
+            `<a href="${esc(u)}">${esc(u.replace(/^mailto:/, ""))}</a>`,
+          );
+        else document.execCommand("createLink", false, u);
+        $("lku").value = "";
+        $("lk").classList.add("hidden");
+      }
+
+      /* Personen */
+      let editP = null;
+      const timeSelect = (value) => {
+        let selected = value || appPreferences.defaultTime || "08:00";
+        if (!quarterHours().includes(selected) && /^\d{2}:\d{2}$/.test(selected)) {
+          const [hours, minutes] = selected.split(":").map(Number);
+          const roundedMinutes = Math.min(23 * 60 + 45, Math.round((hours * 60 + minutes) / 15) * 15);
+          selected = `${String(Math.floor(roundedMinutes / 60)).padStart(2, "0")}:${String(roundedMinutes % 60).padStart(2, "0")}`;
+        }
+        return `<select class="inp mt-1">${timeOptions(selected)}</select>`;
+      };
+      const rowHtml = (v = {}, open = false) =>
+        `<div class="border border-bd rounded-xl p-3 mb-3"><div class="grid grid-cols-1 sm:grid-cols-[110px_1fr_1.4fr] gap-2"><select class="inp"><option ${v.anrede !== "Herr" ? "selected" : ""}>Frau</option><option ${v.anrede === "Herr" ? "selected" : ""}>Herr</option></select><input class="inp" placeholder="Nachname" value="${esc(v.name || "")}"><input class="inp" type="email" placeholder="E-Mail-Adresse" value="${esc(v.mail || "")}"></div><details class="mt-3" ${open ? "open" : ""}><summary class="cursor-pointer text-sm font-semibold text-pr">Weitere Angaben (Warteliste &amp; Termin)</summary><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2"><label class="text-sm text-mu">Registriert am<input class="inp mt-1" type="date" value="${v.reg || ""}"></label><label class="text-sm text-mu">Platz auf der Warteliste<input class="inp mt-1" inputmode="numeric" placeholder="z. B. 142" value="${esc(v.platz || "")}"></label></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2"><label class="text-sm text-mu">Einladungsdatum<input class="inp mt-1" type="date" value="${v.datum || ""}"></label><label class="text-sm text-mu">Uhrzeit von${timeSelect(v.zeit)}</label><label class="text-sm text-mu">Uhrzeit bis${timeSelect(v.zeitBis)}</label></div></details></div>`;
+      function openM(i = null) {
+        editP = i;
+        $("rows").innerHTML = i === null ? rowHtml() : rowHtml(P[i], true);
+        $("merr").textContent = "";
+        $("mTitle").lastChild.textContent =
+          i === null ? "Personen hinzufügen" : "Person bearbeiten";
+        $("addBtn").style.display = i === null ? "" : "none";
+        $("ov").classList.replace("hidden", "flex");
+      }
+      function closeM() {
+        $("ov").classList.replace("flex", "hidden");
+      }
+      function addRow() {
+        $("rows").insertAdjacentHTML("beforeend", rowHtml());
+      }
+      function saveM() {
+        const out = [];
+        let bad = false;
+        [...$("rows").children].forEach((r) => {
+          const [a, n, m, rg, pl, d, z, zb] =
+            r.querySelectorAll("select,input");
+          const name = n.value.trim(),
+            mail = m.value.trim();
+          if (!name && !mail) return;
+          if (!name || !mailRe.test(mail)) {
+            bad = true;
+            return;
+          }
+          out.push({
+            anrede: a.value,
+            name,
+            mail,
+            reg: rg.value,
+            platz: pl.value.trim(),
+            datum: d.value,
+            zeit: z.value,
+            zeitBis: zb.value,
+          });
+        });
+        if (bad) {
+          $("merr").textContent =
+            "Bitte Nachname und eine gültige E-Mail-Adresse bei jeder Zeile angeben.";
+          return;
+        }
+        if (editP !== null) {
+          if (!out.length) {
+            $("merr").textContent =
+              "Bitte Nachname und E-Mail-Adresse angeben.";
+            return;
+          }
+          P[editP] = out[0];
+          delete sent[editP];
+          editP = null;
+        } else P.push(...out);
+        sv();
+        closeM();
+        render();
+      }
+      applyTheme();
+      render();
+      postPersistentData();
+    </script>
+  </body>
+</html>
