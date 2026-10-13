@@ -31,7 +31,7 @@ git tag v1.0.2
 git push origin v1.0.2
 ```
 
-Für die Installation mit einem Eintrag in **Installierte Apps** `TafelEmailAssistent-win.msi` aus dem GitHub-Release verwenden. Es wird pro Benutzer installiert und benötigt keine Administratorrechte. `TafelEmailAssistent-win-Setup.exe` bleibt zusätzlich als Velopack-Ein-Klick-Installer verfügbar. Als Paket-Hersteller wird **Oldenburger Tafel e.V.** angezeigt; für eine vertrauenswürdige Herausgeberwarnung braucht es zusätzlich eine Codesignatur. Eine bisher manuell aus einem `publish`-Ordner gestartete Kopie kann sich nicht selbst aktualisieren und muss einmalig über einen Installer ersetzt werden.
+Für die Installation mit einem Eintrag in **Installierte Apps** `TafelEmailAssistent-win.msi` aus dem GitHub-Release verwenden. Es wird pro Benutzer installiert und benötigt keine Administratorrechte. `TafelEmailAssistent-win-Setup.exe` bleibt zusätzlich als Velopack-Ein-Klick-Installer verfügbar. Als Paket-Hersteller wird **Kjano Eglins** angezeigt; für eine vertrauenswürdige Herausgeberwarnung braucht es zusätzlich eine Codesignatur. Eine bisher manuell aus einem `publish`-Ordner gestartete Kopie kann sich nicht selbst aktualisieren und muss einmalig über einen Installer ersetzt werden.
 
 `appsettings.json` ist lokal und wird durch `.gitignore` vom Repository ausgeschlossen. GitHub Actions paketiert `appsettings.example.json` mit leeren Microsoft-365- und Support-Feldern. Die IDs und Support-Kontakte werden je Installation im Einstellungsmenü gepflegt und unter `%LOCALAPPDATA%\TafelEmailAssistent\settings.json` gespeichert. Client-ID und Tenant-ID sind keine Geheimnisse; ein Client-Secret oder GitHub-Token darf nicht in die App eingebettet werden.
 

@@ -97,7 +97,7 @@ git push origin v1.0.2
 
 Die Versionsnummer bei jedem Release erhöhen und einen veröffentlichten Tag nicht wiederverwenden. GitHub Actions erzeugt den x64-Velopack-Installer, Updatepakete und `releases.win.json` und hängt sie an ein GitHub-Release an. Den Lauf unter **Actions** kontrollieren.
 
-Für einen Eintrag in **Installierte Apps** `TafelEmailAssistent-win.msi` aus dem Release verwenden; es wird pro Benutzer ohne Adminrechte installiert. `TafelEmailAssistent-win-Setup.exe` bleibt zusätzlich verfügbar. Als Paket-Hersteller wird **Oldenburger Tafel e.V.** angezeigt; eine vertrauenswürdige Herausgeberwarnung erfordert zusätzlich eine Codesignatur. Direkt aus einem `publish`-Ordner gestartete Versionen sind nicht Velopack-installiert und können sich nicht automatisch aktualisieren. Nach der Installation prüft die App beim Start auf Updates; zusätzlich kann die Prüfung in den Einstellungen manuell ausgelöst werden.
+Für einen Eintrag in **Installierte Apps** `TafelEmailAssistent-win.msi` aus dem Release verwenden; es wird pro Benutzer ohne Adminrechte installiert. `TafelEmailAssistent-win-Setup.exe` bleibt zusätzlich verfügbar. Als Paket-Hersteller wird **Kjano Eglins** angezeigt; eine vertrauenswürdige Herausgeberwarnung erfordert zusätzlich eine Codesignatur. Direkt aus einem `publish`-Ordner gestartete Versionen sind nicht Velopack-installiert und können sich nicht automatisch aktualisieren. Nach der Installation prüft die App beim Start auf Updates; zusätzlich kann die Prüfung in den Einstellungen manuell ausgelöst werden.
 
 ## Wichtige Dateien
 

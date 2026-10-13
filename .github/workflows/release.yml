@@ -34,7 +34,7 @@ jobs:
         shell: pwsh
         run: |
           $version = $env:GITHUB_REF_NAME.TrimStart('v')
-          vpk pack --packId TafelEmailAssistent --packVersion $version --packDir publish --mainExe TafelEmailAssistent.exe --packTitle "Tafel E-Mail-Assistent" --packAuthors "Oldenburger Tafel e.V." --runtime win-x64 --msi --instLocation PerUser --outputDir Releases
+          vpk pack --packId TafelEmailAssistent --packVersion $version --packDir publish --mainExe TafelEmailAssistent.exe --packTitle "Tafel E-Mail-Assistent" --packAuthors "Kjano Eglins" --runtime win-x64 --msi --instLocation PerUser --outputDir Releases
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
