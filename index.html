@@ -539,6 +539,7 @@
         katSel = "nutzer",
         sent = {},
         calendarStatus = {},
+        calendarKinds = {},
         delId = null,
         editId = null,
         savedRange = null,
@@ -909,7 +910,7 @@
   <div class="${card}"><div class="flex flex-wrap items-end justify-between gap-3"><label class="text-sm font-semibold flex-1 min-w-[220px]">Absender-Signatur<select class="inp mt-1" onchange="selectSignature(this.value)"><option value="">Keine Signatur</option>${signatures.map((s) => `<option value="${esc(s.id)}" ${s.id === selectedSignature ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label><button class="btn" onclick="openSignatures()">${ic("signature")}Signaturen verwalten</button></div></div>
   ${P.map(
     (p, i) => `<div class="${card}"><div class="flex flex-wrap items-start justify-between gap-2"><button class="list-none cursor-pointer flex items-start gap-2 text-left flex-1 min-w-0" type="button" aria-expanded="${!!expandedRecipients[i]}" onclick="toggleRecipient(${i})"><span class="min-w-0 flex-1"><span class="font-semibold block">${esc(p.anrede)} ${esc(p.name)}</span><span class="text-sm text-mu truncate block">${esc(p.mail)}</span></span>${ic(expandedRecipients[i] ? "chevron-up" : "chevron-down", "shrink-0 text-mu")}</button>
-  <div class="flex flex-wrap gap-2 shrink-0"><button class="btn" onclick="openM(${i})" aria-label="Person bearbeiten" title="Person bearbeiten">${ic("pencil")}</button><button class="btn" onclick="addToCalendar(${i})" aria-label="Termin in Outlook-Kalender speichern" title="${calendarReady(p) ? "Termin in Outlook-Kalender speichern" : "Bitte Datum und gültige Anfangs- und Endzeit ergänzen"}" ${(calendarReady(p) && calendarStatus[i] !== "adding" && calendarStatus[i] !== "ok") ? "" : "disabled"}>${ic(calendarStatus[i] === "adding" ? "loader-circle" : calendarStatus[i] === "ok" ? "circle-check" : "calendar-plus")}${calendarStatus[i] === "adding" ? "Speichert …" : calendarStatus[i] === "ok" ? "Im Kalender" : "Kalender"}</button><button class="btn btn-p" onclick="send(${i})" ${sent[i] === "sending" ? "disabled" : ""}>${ic(sent[i] === "sending" ? "loader-circle" : "mail-plus")}${sent[i] === "sending" ? "Entwurf wird erstellt …" : "Entwurf in Outlook erstellen"}</button></div></div>
+  <div class="flex flex-wrap gap-2 shrink-0"><button class="btn" onclick="openM(${i})" aria-label="Person bearbeiten" title="Person bearbeiten">${ic("pencil")}</button><select class="inp text-sm" style="width: 150px" aria-label="Art des Kalendereintrags" title="Art des Kalendereintrags" onchange="setCalendarKind(${i}, this.value)" ${calendarStatus[i] === "adding" || calendarStatus[i] === "ok" ? "disabled" : ""}><option value="normal" ${calendarKinds[i] === "new" ? "" : "selected"}>Normaler Termin</option><option value="new" ${calendarKinds[i] === "new" ? "selected" : ""}>Neuaufnahme</option></select><button class="btn" onclick="addToCalendar(${i})" aria-label="Termin in Outlook-Kalender speichern" title="${calendarReady(p) ? "Termin in Outlook-Kalender speichern" : "Bitte Datum und gültige Anfangs- und Endzeit ergänzen"}" ${(calendarReady(p) && calendarStatus[i] !== "adding" && calendarStatus[i] !== "ok") ? "" : "disabled"}>${ic(calendarStatus[i] === "adding" ? "loader-circle" : calendarStatus[i] === "ok" ? "circle-check" : "calendar-plus")}${calendarStatus[i] === "adding" ? "Speichert …" : calendarStatus[i] === "ok" ? "Im Kalender" : "Kalender"}</button><button class="btn btn-p" onclick="send(${i})" ${sent[i] === "sending" ? "disabled" : ""}>${ic(sent[i] === "sending" ? "loader-circle" : "mail-plus")}${sent[i] === "sending" ? "Entwurf wird erstellt …" : "Entwurf in Outlook erstellen"}</button></div></div>
   ${calendarStatus[i] ? `<div class="mt-2 text-sm font-semibold ${calendarStatus[i] === "ok" ? "text-pr" : calendarStatus[i] === "adding" ? "text-mu" : "text-er"} inline-flex items-center gap-1">${ic(calendarStatus[i] === "ok" ? "circle-check" : calendarStatus[i] === "adding" ? "loader-circle" : "triangle-alert")}${esc(calendarStatus[i] === "ok" ? "Termin wurde im Outlook-Kalender eingetragen." : calendarStatus[i] === "adding" ? "Kalendereintrag wird erstellt …" : calendarStatus[i])}</div>` : ""}
   ${expandedRecipients[i] ? `<div class="mt-3 pt-3 border-t border-bd">
   ${sent[i] ? `<div class="mb-2 text-sm font-semibold ${sent[i] === "ok" ? "text-pr" : sent[i] === "sending" ? "text-mu" : "text-er"} inline-flex items-center gap-1">${ic(sent[i] === "ok" ? "circle-check" : sent[i] === "sending" ? "loader-circle" : "triangle-alert")}${esc(sent[i] === "ok" ? "Entwurf wurde erstellt und in Outlook geöffnet. Bitte dort prüfen und absenden." : sent[i] === "sending" ? "Anmeldung und Entwurfserstellung laufen …" : sent[i])}</div>` : ""}
@@ -932,6 +933,7 @@
         P.splice(i, 1);
         sent = {};
         calendarStatus = {};
+        calendarKinds = {};
         expandedRecipients = {};
         sv();
         render();
@@ -941,6 +943,7 @@
         P = [];
         sent = {};
         calendarStatus = {};
+        calendarKinds = {};
         expandedRecipients = {};
         sv();
         render();
@@ -960,6 +963,7 @@
         P = [];
         sent = {};
         calendarStatus = {};
+        calendarKinds = {};
         expandedRecipients = {};
         sv();
         go(1);
@@ -1029,11 +1033,16 @@
         window.chrome.webview.postMessage({
           type: "createCalendarEvent",
           index: i,
-          subject: `Termin: ${p.anrede} ${p.name}`,
+          subject: `${calendarKinds[i] === "new" ? "Neuaufnahme" : "Normaler Termin"}: ${p.name}`,
           description: `Kontakt: ${p.anrede} ${p.name}\nE-Mail: ${p.mail}`,
           start: `${p.datum}T${p.zeit}:00`,
           end: `${p.datum}T${p.zeitBis}:00`,
         });
+      }
+      function setCalendarKind(i, kind) {
+        calendarKinds[i] = kind;
+        delete calendarStatus[i];
+        render();
       }
 
       if (window.chrome?.webview) {
