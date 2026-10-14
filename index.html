@@ -572,8 +572,11 @@
         katSel = "nutzer",
         sent = {},
         calendarStatus = {},
-        calendarKinds = {},
         calendarPromptIndex = null,
+        calendarPromptIndices = [],
+        calendarPromptAll = false,
+        calendarBatch = null,
+        calendarBatchMessage = "",
         delId = null,
         editId = null,
         savedRange = null,
@@ -681,6 +684,14 @@
       const calendarReady = (p) => {
         const start = timeMinutes(p.zeit), end = timeMinutes(p.zeitBis);
         return Boolean(p.datum && start !== null && end !== null && end > start);
+      };
+      const calendarHint = (p) => {
+        const start = timeMinutes(p.zeit), end = timeMinutes(p.zeitBis);
+        if (!p.datum || start === null || end === null)
+          return "Bitte Datum und gültige Anfangs- und Endzeit ergänzen";
+        if (start === end) return "Anfangs- und Endzeit sind gleich. Bitte eine spätere Endzeit wählen.";
+        if (end < start) return "Die Endzeit muss nach der Anfangszeit liegen.";
+        return "Termin eintragen";
       };
       const icons = () => lucide.createIcons();
       const gruss = (p) =>
@@ -940,17 +951,17 @@
   <div class="flex justify-between"><button class="btn" onclick="go(1)">${ic("arrow-left")}Zurück</button><button class="btn btn-p" ${t ? "" : "disabled"} onclick="go(3)">Weiter${ic("arrow-right")}</button></div>`;
         } else {
           const t = curT();
-          v.innerHTML = `<div class="${card}"><h2 class="font-bold text-lg">Prüfen: ${esc(t.n)}</h2><p class="text-sm text-mu">${P.length} E-Mail(s). Mit den Buttons erstellst du Outlook-Entwürfe zum Prüfen und Absenden oder trägst Termine direkt in deinen Kalender ein.</p></div>
+          v.innerHTML = `<div class="${card}"><div class="flex flex-wrap items-start justify-between gap-3"><div class="min-w-0 flex-1"><h2 class="font-bold text-lg">Prüfen: ${esc(t.n)}</h2><p class="text-sm text-mu">${P.length} E-Mail(s). Mit den Buttons erstellst du Outlook-Entwürfe zum Prüfen und Absenden oder trägst Termine direkt in deinen Kalender ein.</p></div><button class="btn" onclick="openCalendarBatch()" ${P.length && !calendarBatch && !P.some((_, i) => calendarStatus[i] === "adding") ? "" : "disabled"}>${ic(calendarBatch ? "loader-circle" : "calendar-plus")}${calendarBatch ? "Termine werden hinzugefügt …" : "Alle Termine hinzufügen"}</button></div>${calendarBatchMessage ? `<p class="mt-3 text-sm text-mu inline-flex items-center gap-2" aria-live="polite">${ic(calendarBatch ? "loader-circle" : "circle-check")}${esc(calendarBatchMessage)}</p>` : ""}</div>
   <div class="${card}"><div class="flex flex-wrap items-end justify-between gap-3"><label class="text-sm font-semibold flex-1 min-w-[220px]">Absender-Signatur<select class="inp mt-1" onchange="selectSignature(this.value)"><option value="">Keine Signatur</option>${signatures.map((s) => `<option value="${esc(s.id)}" ${s.id === selectedSignature ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label><button class="btn" onclick="openSignatures()">${ic("signature")}Signaturen verwalten</button></div></div>
   ${P.map(
     (p, i) => `<div class="${card}"><div class="flex flex-wrap items-start justify-between gap-2"><button class="list-none cursor-pointer flex items-start gap-2 text-left flex-1 min-w-0" type="button" aria-expanded="${!!expandedRecipients[i]}" onclick="toggleRecipient(${i})"><span class="min-w-0 flex-1"><span class="font-semibold block">${esc(p.anrede)} ${esc(p.name)}</span><span class="text-sm text-mu truncate block">${esc(p.mail)}</span></span>${ic(expandedRecipients[i] ? "chevron-up" : "chevron-down", "shrink-0 text-mu")}</button>
-  <div class="flex flex-wrap gap-2 shrink-0"><button class="btn" onclick="openM(${i})" aria-label="Person bearbeiten" title="Person bearbeiten">${ic("pencil")}</button><button class="btn" onclick="openCalendarType(${i})" aria-label="Termin eintragen" title="${calendarReady(p) ? "Termin eintragen" : "Bitte Datum und gültige Anfangs- und Endzeit ergänzen"}" ${(calendarReady(p) && calendarStatus[i] !== "adding" && calendarStatus[i] !== "ok") ? "" : "disabled"}>${ic(calendarStatus[i] === "adding" ? "loader-circle" : calendarStatus[i] === "ok" ? "circle-check" : "calendar-plus")}${calendarStatus[i] === "adding" ? "Speichert …" : calendarStatus[i] === "ok" ? "Im Kalender" : "Termin eintragen"}</button><button class="btn btn-p" onclick="send(${i})" ${sent[i] === "sending" ? "disabled" : ""}>${ic(sent[i] === "sending" ? "loader-circle" : "mail-plus")}${sent[i] === "sending" ? "Entwurf wird erstellt …" : "Entwurf in Outlook erstellen"}</button></div></div>
+  <div class="flex flex-wrap gap-2 shrink-0"><button class="btn" onclick="openM(${i})" aria-label="Person bearbeiten" title="Person bearbeiten" ${calendarBatch ? "disabled" : ""}>${ic("pencil")}</button><button class="btn" onclick="openCalendarType(${i})" aria-label="Termin eintragen" title="${calendarHint(p)}" ${(calendarReady(p) && calendarStatus[i] !== "adding" && calendarStatus[i] !== "ok" && !calendarBatch) ? "" : "disabled"}>${ic(calendarStatus[i] === "adding" ? "loader-circle" : calendarStatus[i] === "ok" ? "circle-check" : "calendar-plus")}${calendarStatus[i] === "adding" ? "Speichert …" : calendarStatus[i] === "ok" ? "Im Kalender" : "Termin eintragen"}</button><button class="btn btn-p" onclick="send(${i})" ${sent[i] === "sending" || calendarBatch ? "disabled" : ""}>${ic(sent[i] === "sending" ? "loader-circle" : "mail-plus")}${sent[i] === "sending" ? "Entwurf wird erstellt …" : "Entwurf in Outlook erstellen"}</button></div></div>
   ${calendarStatus[i] ? `<div class="mt-2 text-sm font-semibold ${calendarStatus[i] === "ok" ? "text-pr" : calendarStatus[i] === "adding" ? "text-mu" : "text-er"} inline-flex items-center gap-1">${ic(calendarStatus[i] === "ok" ? "circle-check" : calendarStatus[i] === "adding" ? "loader-circle" : "triangle-alert")}${esc(calendarStatus[i] === "ok" ? "Termin wurde im Outlook-Kalender eingetragen." : calendarStatus[i] === "adding" ? "Kalendereintrag wird erstellt …" : calendarStatus[i])}</div>` : ""}
   ${expandedRecipients[i] ? `<div class="mt-3 pt-3 border-t border-bd">
   ${sent[i] ? `<div class="mb-2 text-sm font-semibold ${sent[i] === "ok" ? "text-pr" : sent[i] === "sending" ? "text-mu" : "text-er"} inline-flex items-center gap-1">${ic(sent[i] === "ok" ? "circle-check" : sent[i] === "sending" ? "loader-circle" : "triangle-alert")}${esc(sent[i] === "ok" ? "Entwurf wurde erstellt und in Outlook geöffnet. Bitte dort prüfen und absenden." : sent[i] === "sending" ? "Anmeldung und Entwurfserstellung laufen …" : sent[i])}</div>` : ""}
   ${miss(t, p).length ? `<div class="mb-2 text-sm font-semibold text-er inline-flex items-center gap-1">${ic("triangle-alert")}Es fehlt: ${miss(t, p).join(", ")}. Bitte über den Stift-Button ergänzen.</div>` : ""}<div class="text-sm text-mu">Betreff: ${esc(fillS(t.s, p))}</div><div id="pv${i}" class="rt mt-2 p-3 rounded-lg bg-bg border border-bd">${withSignature(fill(t.h, p))}</div></div>` : ""}</div>`,
   ).join("")}
-  <div class="flex justify-between"><button class="btn" onclick="go(2)">${ic("arrow-left")}Zurück</button><button class="btn" id="rb" onclick="resetAll()">${ic("rotate-ccw")}Neu beginnen</button></div>`;
+  <div class="flex justify-between"><button class="btn" onclick="go(2)" ${calendarBatch ? "disabled" : ""}>${ic("arrow-left")}Zurück</button><button class="btn" id="rb" onclick="resetAll()" ${calendarBatch ? "disabled" : ""}>${ic("rotate-ccw")}Neu beginnen</button></div>`;
         }
         icons();
       }
@@ -967,7 +978,6 @@
         P.splice(i, 1);
         sent = {};
         calendarStatus = {};
-        calendarKinds = {};
         expandedRecipients = {};
         sv();
         render();
@@ -977,7 +987,6 @@
         P = [];
         sent = {};
         calendarStatus = {};
-        calendarKinds = {};
         expandedRecipients = {};
         sv();
         render();
@@ -997,7 +1006,6 @@
         P = [];
         sent = {};
         calendarStatus = {};
-        calendarKinds = {};
         expandedRecipients = {};
         sv();
         go(1);
@@ -1062,27 +1070,88 @@
           return;
         }
 
+        calendarPromptAll = false;
+        calendarPromptIndices = [i];
         calendarPromptIndex = i;
         $("calendarPromptName").textContent = p.name;
+        $("calendarTypeOv").classList.replace("hidden", "flex");
+        icons();
+      }
+      function openCalendarBatch() {
+        if (calendarBatch || P.some((_, i) => calendarStatus[i] === "adding")) return;
+        if (!window.chrome?.webview) {
+          calendarBatchMessage = "Kalendereinträge können nur in der installierten Windows-App erstellt werden.";
+          render();
+          return;
+        }
+
+        const indices = P.map((person, index) => ({ person, index }))
+          .filter(({ person, index }) => calendarReady(person) && calendarStatus[index] !== "ok")
+          .map(({ index }) => index);
+        const skipped = P.length - indices.length;
+        if (!indices.length) {
+          calendarBatchMessage = P.length
+            ? "Keine offenen Termine mit gültigen Zeiten vorhanden."
+            : "Noch keine Personen erfasst.";
+          render();
+          return;
+        }
+
+        calendarPromptAll = true;
+        calendarPromptIndex = null;
+        calendarPromptIndices = indices;
+        $("calendarPromptName").textContent = `${indices.length} Termine; ${skipped} übersprungen`;
         $("calendarTypeOv").classList.replace("hidden", "flex");
         icons();
       }
       function closeCalendarType() {
         $("calendarTypeOv").classList.replace("flex", "hidden");
         calendarPromptIndex = null;
+        calendarPromptIndices = [];
+        calendarPromptAll = false;
       }
       function confirmCalendarType(kind) {
+        if (calendarPromptAll) {
+          const indices = calendarPromptIndices.slice();
+          const skipped = P.length - indices.length;
+          closeCalendarType();
+          startCalendarBatch(indices, kind, skipped);
+          return;
+        }
         const i = calendarPromptIndex;
         if (i === null || !P[i]) return;
-        const p = P[i];
-        calendarKinds[i] = kind;
         closeCalendarType();
         calendarStatus[i] = "adding";
         render();
+        postCalendarEvent(i, kind);
+      }
+      function startCalendarBatch(indices, kind, skipped) {
+        calendarBatch = { indices, kind, position: 0, currentIndex: null, added: 0, failed: 0, skipped };
+        calendarBatchMessage = `Alle Termine werden hinzugefügt (0/${indices.length}) …`;
+        processNextCalendarEvent();
+      }
+      function processNextCalendarEvent() {
+        if (!calendarBatch) return;
+        if (calendarBatch.position >= calendarBatch.indices.length) {
+          calendarBatchMessage = `Alle Termine: ${calendarBatch.added} eingetragen, ${calendarBatch.failed} fehlgeschlagen, ${calendarBatch.skipped} übersprungen.`;
+          calendarBatch = null;
+          render();
+          return;
+        }
+
+        const index = calendarBatch.indices[calendarBatch.position];
+        calendarBatch.currentIndex = index;
+        calendarBatchMessage = `Termin ${calendarBatch.position + 1} von ${calendarBatch.indices.length} wird eingetragen …`;
+        calendarStatus[index] = "adding";
+        render();
+        postCalendarEvent(index, calendarBatch.kind);
+      }
+      function postCalendarEvent(index, kind) {
+        const p = P[index];
         window.chrome.webview.postMessage({
           type: "createCalendarEvent",
-          index: i,
-          subject: `${calendarKinds[i] === "new" ? "Neuaufnahme" : "Normaler Termin"}: ${p.name}`,
+          index,
+          subject: `${kind === "new" ? "Neuaufnahme" : "Normaler Termin"}: ${p.name}`,
           description: `Kontakt: ${p.anrede} ${p.name}\nE-Mail: ${p.mail}`,
           start: `${p.datum}T${p.zeit}:00`,
           end: `${p.datum}T${p.zeitBis}:00`,
@@ -1120,6 +1189,14 @@
           }
           if (result.type === "calendarResult") {
             calendarStatus[result.index] = result.success ? "ok" : result.message;
+            if (calendarBatch && result.index === calendarBatch.currentIndex) {
+              if (result.success) calendarBatch.added++;
+              else calendarBatch.failed++;
+              calendarBatch.position++;
+              calendarBatch.currentIndex = null;
+              processNextCalendarEvent();
+              return;
+            }
             render();
             return;
           }
@@ -1449,13 +1526,22 @@
           const roundedMinutes = Math.min(23 * 60 + 45, Math.round((hours * 60 + minutes) / 15) * 15);
           selected = `${String(Math.floor(roundedMinutes / 60)).padStart(2, "0")}:${String(roundedMinutes % 60).padStart(2, "0")}`;
         }
-        return `<select class="inp mt-1">${timeOptions(selected)}</select>`;
+        return `<select class="inp mt-1" onchange="updateAppointmentWarning(this)">${timeOptions(selected)}</select>`;
       };
       const rowHtml = (v = {}, open = false) =>
-        `<div class="border border-bd rounded-xl p-3 mb-3"><div class="grid grid-cols-1 sm:grid-cols-[110px_1fr_1.4fr] gap-2"><select class="inp"><option ${v.anrede !== "Herr" ? "selected" : ""}>Frau</option><option ${v.anrede === "Herr" ? "selected" : ""}>Herr</option></select><input class="inp" placeholder="Nachname" value="${esc(v.name || "")}"><input class="inp" type="email" placeholder="E-Mail-Adresse" value="${esc(v.mail || "")}"></div><details class="mt-3" ${open ? "open" : ""}><summary class="cursor-pointer text-sm font-semibold text-pr">Weitere Angaben (Warteliste &amp; Termin)</summary><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2"><label class="text-sm text-mu">Registriert am<input class="inp mt-1" type="date" value="${v.reg || ""}"></label><label class="text-sm text-mu">Platz auf der Warteliste<input class="inp mt-1" inputmode="numeric" placeholder="z. B. 142" value="${esc(v.platz || "")}"></label></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2"><label class="text-sm text-mu">Einladungsdatum<input class="inp mt-1" type="date" value="${v.datum || ""}"></label><label class="text-sm text-mu">Uhrzeit von${timeSelect(v.zeit)}</label><label class="text-sm text-mu">Uhrzeit bis${timeSelect(v.zeitBis)}</label></div></details></div>`;
+        `<div class="person-row border border-bd rounded-xl p-3 mb-3"><div class="grid grid-cols-1 sm:grid-cols-[110px_1fr_1.4fr] gap-2"><select class="inp"><option ${v.anrede !== "Herr" ? "selected" : ""}>Frau</option><option ${v.anrede === "Herr" ? "selected" : ""}>Herr</option></select><input class="inp" placeholder="Nachname" value="${esc(v.name || "")}"><input class="inp" type="email" placeholder="E-Mail-Adresse" value="${esc(v.mail || "")}"></div><details class="mt-3" ${open ? "open" : ""}><summary class="cursor-pointer text-sm font-semibold text-pr">Weitere Angaben (Warteliste &amp; Termin)</summary><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2"><label class="text-sm text-mu">Registriert am<input class="inp mt-1" type="date" value="${v.reg || ""}"></label><label class="text-sm text-mu">Platz auf der Warteliste<input class="inp mt-1" inputmode="numeric" placeholder="z. B. 142" value="${esc(v.platz || "")}"></label></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2"><label class="text-sm text-mu">Einladungsdatum<input class="inp mt-1" type="date" value="${v.datum || ""}" data-appointment-date onchange="updateAppointmentWarning(this)"></label><label class="text-sm text-mu">Uhrzeit von${timeSelect(v.zeit)}</label><label class="text-sm text-mu">Uhrzeit bis${timeSelect(v.zeitBis)}</label></div><p data-time-warning class="hidden mt-2 text-sm text-er inline-flex items-center gap-1">${ic("triangle-alert")}Anfangs- und Endzeit sind identisch. Bitte wähle eine spätere Endzeit.</p></details></div>`;
+      function updateAppointmentWarning(input) {
+        const row = input.closest(".person-row");
+        if (!row) return;
+        const date = row.querySelector("[data-appointment-date]");
+        const times = row.querySelectorAll("select");
+        const warning = row.querySelector("[data-time-warning]");
+        warning.classList.toggle("hidden", !(date.value && times[1].value && times[1].value === times[2].value));
+      }
       function openM(i = null) {
         editP = i;
         $("rows").innerHTML = i === null ? rowHtml() : rowHtml(P[i], true);
+        updateAppointmentWarning($("rows").firstElementChild.querySelector("[data-appointment-date]"));
         $("merr").textContent = "";
         $("mTitle").lastChild.textContent =
           i === null ? "Personen hinzufügen" : "Person bearbeiten";
@@ -1467,6 +1553,7 @@
       }
       function addRow() {
         $("rows").insertAdjacentHTML("beforeend", rowHtml());
+        updateAppointmentWarning($("rows").lastElementChild.querySelector("[data-appointment-date]"));
       }
       function saveM() {
         const out = [];
