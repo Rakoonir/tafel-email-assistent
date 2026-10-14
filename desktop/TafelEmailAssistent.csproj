@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>TafelEmailAssistent.Program</StartupObject>
     <Version>1.0.0</Version>
+    <ApplicationIcon>assets\tafel-email-assistent.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
