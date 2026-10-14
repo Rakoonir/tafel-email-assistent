@@ -23,7 +23,8 @@ namespace TafelEmailAssistent;
 public partial class MainWindow : Window
 {
     private static readonly HttpClient Http = new();
-    private static readonly string[] GraphScopes = ["https://graph.microsoft.com/Mail.ReadWrite"];
+    private static readonly string[] MailGraphScopes = ["https://graph.microsoft.com/Mail.ReadWrite"];
+    private static readonly string[] CalendarGraphScopes = ["https://graph.microsoft.com/Calendar.ReadWrite"];
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true
@@ -133,6 +134,27 @@ public partial class MainWindow : Window
                 return;
             }
 
+            if (type == "createCalendarEvent")
+            {
+                var eventIndex = root.GetProperty("index").GetInt32();
+                var eventSubject = root.GetProperty("subject").GetString() ?? "";
+                var description = root.GetProperty("description").GetString() ?? "";
+                var start = DateTime.ParseExact(
+                    root.GetProperty("start").GetString() ?? "",
+                    "yyyy-MM-dd'T'HH:mm:ss",
+                    CultureInfo.InvariantCulture);
+                var end = DateTime.ParseExact(
+                    root.GetProperty("end").GetString() ?? "",
+                    "yyyy-MM-dd'T'HH:mm:ss",
+                    CultureInfo.InvariantCulture);
+                if (end <= start)
+                    throw new InvalidOperationException("Die Endzeit muss nach der Anfangszeit liegen.");
+
+                await CreateCalendarEventAsync(eventSubject, description, start, end);
+                PostCalendarResult(eventIndex, true, "Termin wurde im Outlook-Kalender eingetragen.");
+                return;
+            }
+
             if (type != "createDraft")
                 return;
 
@@ -147,19 +169,27 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             var index = -1;
+            var operation = "";
             try
             {
                 using var message = JsonDocument.Parse(e.WebMessageAsJson);
-                index = message.RootElement.GetProperty("index").GetInt32();
+                var root = message.RootElement;
+                index = root.GetProperty("index").GetInt32();
+                operation = root.GetProperty("type").GetString() ?? "";
             }
             catch (JsonException)
             {
             }
 
             if (index >= 0)
-                PostResult(index, false, ex.Message);
+            {
+                if (operation == "createCalendarEvent")
+                    PostCalendarResult(index, false, ex.Message);
+                else
+                    PostResult(index, false, ex.Message);
+            }
             else
-                MessageBox.Show(ex.Message, "Outlook-Entwurf konnte nicht erstellt werden", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.Message, "Outlook-Aktion fehlgeschlagen", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -389,32 +419,7 @@ public partial class MainWindow : Window
 
     private async Task<string> CreateDraftAsync(string recipient, string subject, string html)
     {
-        var clientId = _preferences.Authentication.ClientId;
-        var tenantId = _preferences.Authentication.TenantId;
-
-        if (!Guid.TryParse(clientId, out _) || !Guid.TryParse(tenantId, out _))
-            throw new InvalidOperationException(
-                "Bitte zuerst Client-ID und Tenant-ID in den Einstellungen unter Microsoft 365 eintragen.");
-
-        _identity ??= PublicClientApplicationBuilder
-            .Create(clientId!)
-            .WithAuthority($"https://login.microsoftonline.com/{tenantId}")
-            .WithDefaultRedirectUri()
-            .Build();
-
-        AuthenticationResult token;
-        var account = (await _identity.GetAccountsAsync()).FirstOrDefault();
-        try
-        {
-            token = await _identity.AcquireTokenSilent(GraphScopes, account).ExecuteAsync();
-        }
-        catch (MsalUiRequiredException)
-        {
-            token = await _identity.AcquireTokenInteractive(GraphScopes)
-                .WithParentActivityOrWindow(new WindowInteropHelper(this).Handle)
-                .WithUseEmbeddedWebView(false)
-                .ExecuteAsync();
-        }
+        var token = await AcquireGraphTokenAsync(MailGraphScopes);
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
@@ -438,11 +443,81 @@ public partial class MainWindow : Window
         return webLink;
     }
 
+    private async Task CreateCalendarEventAsync(string subject, string description, DateTime start, DateTime end)
+    {
+        var token = await AcquireGraphTokenAsync(CalendarGraphScopes);
+        const string timeZone = "W. Europe Standard Time";
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/events");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        request.Content = JsonContent.Create(new
+        {
+            subject,
+            body = new { contentType = "Text", content = description },
+            start = new
+            {
+                dateTime = start.ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture),
+                timeZone
+            },
+            end = new
+            {
+                dateTime = end.ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture),
+                timeZone
+            }
+        });
+
+        using var response = await Http.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Microsoft Graph meldet {(int)response.StatusCode}: {responseBody}");
+        }
+    }
+
+    private async Task<AuthenticationResult> AcquireGraphTokenAsync(string[] scopes)
+    {
+        var clientId = _preferences.Authentication.ClientId;
+        var tenantId = _preferences.Authentication.TenantId;
+
+        if (!Guid.TryParse(clientId, out _) || !Guid.TryParse(tenantId, out _))
+            throw new InvalidOperationException(
+                "Bitte zuerst Client-ID und Tenant-ID in den Einstellungen unter Microsoft 365 eintragen.");
+
+        _identity ??= PublicClientApplicationBuilder
+            .Create(clientId!)
+            .WithAuthority($"https://login.microsoftonline.com/{tenantId}")
+            .WithDefaultRedirectUri()
+            .Build();
+
+        var account = (await _identity.GetAccountsAsync()).FirstOrDefault();
+        try
+        {
+            return await _identity.AcquireTokenSilent(scopes, account).ExecuteAsync();
+        }
+        catch (MsalUiRequiredException)
+        {
+            return await _identity.AcquireTokenInteractive(scopes)
+                .WithParentActivityOrWindow(new WindowInteropHelper(this).Handle)
+                .WithUseEmbeddedWebView(false)
+                .ExecuteAsync();
+        }
+    }
+
     private void PostResult(int index, bool success, string message)
     {
         Browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new
         {
             type = "draftResult",
+            index,
+            success,
+            message
+        }));
+    }
+
+    private void PostCalendarResult(int index, bool success, string message)
+    {
+        Browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new
+        {
+            type = "calendarResult",
             index,
             success,
             message
