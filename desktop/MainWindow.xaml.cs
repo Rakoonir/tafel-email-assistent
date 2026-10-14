@@ -222,8 +222,6 @@ public partial class MainWindow : Window
             using var appSettings = JsonDocument.Parse(File.ReadAllText(appSettingsPath));
             if (appSettings.RootElement.TryGetProperty("Authentication", out var authentication))
                 _preferences.Authentication = ReadAuthentication(authentication);
-            if (appSettings.RootElement.TryGetProperty("Support", out var support))
-                _preferences.Support = ReadSupport(support);
         }
 
         if (File.Exists(_preferencesFilePath))
@@ -239,8 +237,6 @@ public partial class MainWindow : Window
                     && Guid.TryParse(saved.Authentication.ClientId, out _)
                     && Guid.TryParse(saved.Authentication.TenantId, out _))
                     _preferences.Authentication = saved.Authentication;
-                if (saved.Support is not null)
-                    _preferences.Support = saved.Support;
             }
         }
 
@@ -264,7 +260,6 @@ public partial class MainWindow : Window
 
         _preferences.DefaultTime = defaultTime;
         _preferences.Authentication = authentication;
-        _preferences.Support = ReadSupport(root.GetProperty("support"));
         SavePreferences();
         SendSettingsInfo();
     }
@@ -336,37 +331,13 @@ public partial class MainWindow : Window
             },
             support = new
             {
-                name = _preferences.Support.Name,
-                email = _preferences.Support.Email,
-                website = _preferences.Support.Website,
-                phone = _preferences.Support.Phone,
-                hours = _preferences.Support.Hours
+                name = "Kjano Eglins",
+                email = "support@kjano.de",
+                website = "https://tafel.kjano.de",
+                phone = "01525 2777 593",
+                hours = "09:00 - 18:00 Uhr"
             }
         }, JsonOptions));
-    }
-
-    private static SupportSettings ReadSupport(JsonElement section)
-    {
-        string Read(string key)
-        {
-            if (section.ValueKind != JsonValueKind.Object)
-                return "";
-
-            foreach (var property in section.EnumerateObject())
-                if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))
-                    return property.Value.GetString() ?? "";
-
-            return "";
-        }
-
-        return new SupportSettings
-        {
-            Name = Read("Name"),
-            Email = Read("Email"),
-            Website = Read("Website"),
-            Phone = Read("Phone"),
-            Hours = Read("Hours")
-        };
     }
 
     private static AuthenticationSettings ReadAuthentication(JsonElement section)
@@ -399,22 +370,12 @@ public partial class MainWindow : Window
         public string DataDirectory { get; set; } = "";
         public string DefaultTime { get; set; } = "08:00";
         public AuthenticationSettings Authentication { get; set; } = new();
-        public SupportSettings Support { get; set; } = new();
     }
 
     private sealed class AuthenticationSettings
     {
         public string ClientId { get; set; } = "";
         public string TenantId { get; set; } = "";
-    }
-
-    private sealed class SupportSettings
-    {
-        public string Name { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string Website { get; set; } = "";
-        public string Phone { get; set; } = "";
-        public string Hours { get; set; } = "";
     }
 
     private async Task<string> CreateDraftAsync(string recipient, string subject, string html)
