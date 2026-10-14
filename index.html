@@ -1151,7 +1151,9 @@
         window.chrome.webview.postMessage({
           type: "createCalendarEvent",
           index,
-          subject: `${kind === "new" ? "Neuaufnahme" : "Normaler Termin"}: ${p.name}`,
+          subject: kind === "new"
+            ? `Neuaufnahme: ${p.name}${p.platz ? ` (${p.platz})` : ""}`
+            : `Normaler Termin: ${p.name}`,
           description: `Kontakt: ${p.anrede} ${p.name}\nE-Mail: ${p.mail}`,
           start: `${p.datum}T${p.zeit}:00`,
           end: `${p.datum}T${p.zeitBis}:00`,
