@@ -24,7 +24,7 @@ public partial class MainWindow : Window
 {
     private static readonly HttpClient Http = new();
     private static readonly string[] MailGraphScopes = ["https://graph.microsoft.com/Mail.ReadWrite"];
-    private static readonly string[] CalendarGraphScopes = ["https://graph.microsoft.com/Calendar.ReadWrite"];
+    private static readonly string[] CalendarGraphScopes = ["https://graph.microsoft.com/Calendars.ReadWrite"];
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true
